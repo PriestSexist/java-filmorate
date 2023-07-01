@@ -44,10 +44,7 @@ public class FilmController {
     }
 
     @GetMapping("/all")
-    public HashMap<Integer, Film> getFilms(){
+    public HashMap<Integer, Film> getFilms() {
         return films;
     }
-
-
-
 }
