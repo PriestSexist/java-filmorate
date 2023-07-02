@@ -109,7 +109,7 @@ class UserControllerTest {
                     .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
             flag = 1;
 
-        } catch (Exception exception){
+        } catch (Exception exception) {
             flag = 0;
         }
         Assertions.assertEquals(0, flag);
@@ -133,7 +133,7 @@ class UserControllerTest {
                     .andDo(print());
             flag = 1;
 
-        } catch (Exception exception){
+        } catch (Exception exception) {
             flag = 0;
         }
         Assertions.assertEquals(0, flag);
@@ -243,7 +243,7 @@ class UserControllerTest {
                     .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
             flag = 1;
 
-        } catch (Exception exception){
+        } catch (Exception exception) {
             flag = 0;
         }
         Assertions.assertEquals(0, flag);
