@@ -16,7 +16,7 @@ public class UserController {
 
     HashMap<Integer, User> users = new HashMap<>();
 
-    @PostMapping("/user")
+    @PostMapping()
     public HashMap<Integer, User> postUser(@Valid @RequestBody User user) throws InvalidLoginException, InvalidIdentificatorException {
         if (!user.getLogin().contains(" ")) {
 
@@ -35,23 +35,22 @@ public class UserController {
         return users;
     }
 
-    @PutMapping("/{oldId}")
-    public HashMap<Integer, User> putUser(@Valid @RequestBody User user, @PathVariable int oldId) throws InvalidLoginException {
+    @PutMapping()
+    public HashMap<Integer, User> putUser(@Valid @RequestBody User user) throws InvalidLoginException {
         if (!user.getLogin().contains(" ")) {
 
             if (user.getName().isBlank()) {
                 user.setName(user.getLogin());
             }
 
-            users.remove(oldId);
-            users.put(user.getId(), user);
+            users.replace(user.getId(), user);
         } else {
             throw new InvalidLoginException("Invalid login");
         }
         return users;
     }
 
-    @GetMapping("/all")
+    @GetMapping()
     public HashMap<Integer, User> getUsers() {
         return users;
     }

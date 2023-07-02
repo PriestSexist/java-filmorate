@@ -18,7 +18,7 @@ public class FilmController {
     HashMap<Integer, Film> films = new HashMap<>();
     private static final LocalDate BIRTH_OF_CINEMA = LocalDate.of(1895, 12, 28);
 
-    @PostMapping("/film")
+    @PostMapping()
     public HashMap<Integer, Film> postFilm(@Valid @RequestBody Film film) throws InvalidReleaseDateException, InvalidIdentificatorException {
         if (film.getReleaseDate().isAfter(BIRTH_OF_CINEMA) || film.getReleaseDate().equals(BIRTH_OF_CINEMA)) {
             if (!films.containsKey(film.getId())) {
@@ -32,18 +32,17 @@ public class FilmController {
         return films;
     }
 
-    @PutMapping("/{oldId}")
-    public HashMap<Integer, Film> putFilm(@Valid @RequestBody Film film, @PathVariable int oldId) throws InvalidReleaseDateException {
+    @PutMapping()
+    public HashMap<Integer, Film> putFilm(@Valid @RequestBody Film film) throws InvalidReleaseDateException {
         if (film.getReleaseDate().isAfter(BIRTH_OF_CINEMA) || film.getReleaseDate().equals(BIRTH_OF_CINEMA)) {
-            films.remove(oldId);
-            films.put(film.getId(), film);
+            films.replace(film.getId(), film);
         } else {
             throw new InvalidReleaseDateException("Invalid release date");
         }
         return films;
     }
 
-    @GetMapping("/all")
+    @GetMapping()
     public HashMap<Integer, Film> getFilms() {
         return films;
     }
