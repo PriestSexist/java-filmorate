@@ -126,7 +126,7 @@ class UserControllerTest {
 
         this.mockMvc.perform(put("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"id\": \"1\", \"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isOk());
     }
@@ -142,7 +142,7 @@ class UserControllerTest {
 
         this.mockMvc.perform(put("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\": \"vit@ekb650g@mail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"id\": \"1\", \"email\": \"vit@ekb650g@mail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
@@ -159,7 +159,7 @@ class UserControllerTest {
 
         this.mockMvc.perform(put("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\": \" \", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"id\": \"1\", \"email\": \" \", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
@@ -176,7 +176,7 @@ class UserControllerTest {
 
         this.mockMvc.perform(put("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \" \",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"id\": \"1\", \"email\": \"vitekb650@gmail.com\", \"login\": \" \",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
@@ -193,7 +193,7 @@ class UserControllerTest {
 
         this.mockMvc.perform(put("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2025-10-22\"}"))
+                        .content("{\"id\": \"1\", \"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2025-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
@@ -213,7 +213,7 @@ class UserControllerTest {
         try {
             this.mockMvc.perform(put("http://localhost:8081/users")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"Priest Sexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                            .content("{\"id\": \"1\", \"email\": \"vitekb650@gmail.com\", \"login\": \"Priest Sexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));

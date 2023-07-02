@@ -108,13 +108,13 @@ class FilmControllerTest {
 
         this.mockMvc.perform(post("http://localhost:8081/films")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
+                        .content("{\"name\": \"ViktorB Alive\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
                 .andDo(print())
                 .andExpect(status().isOk());
 
         this.mockMvc.perform(put("http://localhost:8081/films")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"Stas Live\", \"releaseDate\": \"1989-10-24\", \"duration\": 120, \"description\": \"Stas hates everyone\"}"))
+                        .content("{\"id\": \"1\", \"name\": \"Stas Live\", \"releaseDate\": \"1989-10-24\", \"duration\": 120, \"description\": \"Stas hates everyone\"}"))
                 .andDo(print())
                 .andExpect(status().isOk());
 
@@ -131,7 +131,7 @@ class FilmControllerTest {
 
         this.mockMvc.perform(put("http://localhost:8081/films")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \" \", \"releaseDate\": \"1989-10-24\", \"duration\": 120, \"description\": \"Stas hates everyone\"}"))
+                        .content("{\"id\": \"1\", \"name\": \" \", \"releaseDate\": \"1989-10-24\", \"duration\": 120, \"description\": \"Stas hates everyone\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
@@ -148,7 +148,7 @@ class FilmControllerTest {
 
         this.mockMvc.perform(put("http://localhost:8081/films")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"Stas Live\", \"releaseDate\": \"1989-10-24\", \"duration\": 0, \"description\": \"Stas hates everyone\"}"))
+                        .content("{\"id\": \"1\", \"name\": \"Stas Live\", \"releaseDate\": \"1989-10-24\", \"duration\": 0, \"description\": \"Stas hates everyone\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
@@ -165,7 +165,7 @@ class FilmControllerTest {
 
         this.mockMvc.perform(put("http://localhost:8081/films")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"Stas Live\", \"releaseDate\": \"1989-10-24\", \"duration\": -1, \"description\": \"Stas hates everyone\"}"))
+                        .content("{\"id\": \"1\", \"name\": \"Stas Live\", \"releaseDate\": \"1989-10-24\", \"duration\": -1, \"description\": \"Stas hates everyone\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
@@ -182,7 +182,7 @@ class FilmControllerTest {
 
         this.mockMvc.perform(put("http://localhost:8081/films")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. \"}"))
+                        .content("{\"id\": \"1\", \"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. \"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
@@ -202,7 +202,7 @@ class FilmControllerTest {
         try {
             this.mockMvc.perform(put("http://localhost:8081/films")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"name\": \"Stas Live\", \"releaseDate\": \"1895-12-27\", \"duration\": 120, \"description\": \"Stas hates everyone\"}"))
+                            .content("{\"id\": \"1\", \"name\": \"Stas Live\", \"releaseDate\": \"1895-12-27\", \"duration\": 120, \"description\": \"Stas hates everyone\"}"))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
