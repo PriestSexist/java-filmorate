@@ -1,12 +1,12 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.InvalidIdentificatorException;
 import ru.yandex.practicum.filmorate.exception.user.InvalidLoginException;
 import ru.yandex.practicum.filmorate.model.User;
 
+import javax.validation.Valid;
 import java.util.HashMap;
 
 @RestController
@@ -17,7 +17,7 @@ public class UserController {
     HashMap<Integer, User> users = new HashMap<>();
 
     @PostMapping("/user")
-    public HashMap<Integer, User> postUser(@Valid  @RequestBody User user) throws InvalidLoginException, InvalidIdentificatorException {
+    public HashMap<Integer, User> postUser(@Valid @RequestBody User user) throws InvalidLoginException, InvalidIdentificatorException {
         if (!user.getLogin().contains(" ")) {
 
             if (user.getName().isBlank()) {
