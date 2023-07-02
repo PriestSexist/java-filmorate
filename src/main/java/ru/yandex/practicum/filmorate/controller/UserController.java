@@ -7,52 +7,56 @@ import ru.yandex.practicum.filmorate.exception.user.InvalidLoginException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
 @RequestMapping("/users")
 @Slf4j
 public class UserController {
 
+    private static final AtomicInteger count = new AtomicInteger(0);
     HashMap<Integer, User> users = new HashMap<>();
 
     @PostMapping()
-    public HashMap<Integer, User> postUser(@Valid @RequestBody User user) throws InvalidLoginException, InvalidIdentificatorException {
+    public User postUser(@Valid @RequestBody User user) throws InvalidLoginException {
         if (!user.getLogin().contains(" ")) {
 
-            if (user.getName().isBlank()) {
+            if (user.getName() == null || user.getName().isBlank()) {
                 user.setName(user.getLogin());
             }
+            user.setId(count.incrementAndGet());
+            users.put(user.getId(), user);
 
-            if (!users.containsKey(user.getId())) {
-                users.put(user.getId(), user);
-            } else {
-                throw new InvalidIdentificatorException("This id already exists");
-            }
         } else {
             throw new InvalidLoginException("Invalid login");
         }
-        return users;
+        return user;
     }
 
     @PutMapping()
-    public HashMap<Integer, User> putUser(@Valid @RequestBody User user) throws InvalidLoginException {
+    public User putUser(@Valid @RequestBody User user) throws InvalidLoginException, InvalidIdentificatorException {
         if (!user.getLogin().contains(" ")) {
 
             if (user.getName().isBlank()) {
                 user.setName(user.getLogin());
             }
 
-            users.replace(user.getId(), user);
+            if (users.containsKey(user.getId())) {
+                users.replace(user.getId(), user);
+            } else {
+                throw new InvalidIdentificatorException("Invalid id");
+            }
         } else {
             throw new InvalidLoginException("Invalid login");
         }
-        return users;
+        return user;
     }
 
     @GetMapping()
-    public HashMap<Integer, User> getUsers() {
-        return users;
+    public ArrayList<User> getUsers() {
+        return new ArrayList<>(users.values());
     }
 
 

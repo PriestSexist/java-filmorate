@@ -40,7 +40,7 @@ class UserControllerTest {
 
         this.mockMvc.perform(post("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 1, \"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isOk());
     }
@@ -50,7 +50,7 @@ class UserControllerTest {
 
         this.mockMvc.perform(post("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 2, \"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \" \",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \" \",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isOk());
     }
@@ -59,7 +59,7 @@ class UserControllerTest {
     public void shouldNotPostUserWithInvalidEmail() throws Exception {
         this.mockMvc.perform(post("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 3, \"email\": \"vit@ekb650g@mail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"email\": \"vit@ekb650g@mail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
@@ -69,7 +69,7 @@ class UserControllerTest {
     public void shouldNotPostUserWithBlankEmail() throws Exception {
         this.mockMvc.perform(post("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 4, \"email\": \" \", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"email\": \" \", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
@@ -79,7 +79,7 @@ class UserControllerTest {
     public void shouldNotPostUserWithBlankLogin() throws Exception {
         this.mockMvc.perform(post("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 5, \"email\": \"vitekb650@gmail.com\", \"login\": \" \",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \" \",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
@@ -89,7 +89,7 @@ class UserControllerTest {
     public void shouldNotPostUserWithBirthdayFromFuture() throws Exception {
         this.mockMvc.perform(post("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 6, \"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2025-10-22\"}"))
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2025-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
@@ -103,34 +103,10 @@ class UserControllerTest {
         try {
             this.mockMvc.perform(post("http://localhost:8081/users")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"id\": 7, \"email\": \"vitekb650@gmail.com\", \"login\": \"Priest Sexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                            .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"Priest Sexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
-            flag = 1;
-
-        } catch (Exception exception) {
-            flag = 0;
-        }
-        Assertions.assertEquals(0, flag);
-    }
-
-    @Test
-    public void shouldNotPostUserWithExistingId() throws Exception {
-
-        int flag;
-
-        this.mockMvc.perform(post("http://localhost:8081/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":8, \"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
-                .andDo(print())
-                .andExpect(status().isOk());
-
-        try {
-            this.mockMvc.perform(post("http://localhost:8081/users")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"id\": 8, \"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
-                    .andDo(print());
             flag = 1;
 
         } catch (Exception exception) {
@@ -144,13 +120,13 @@ class UserControllerTest {
 
         this.mockMvc.perform(post("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 9, \"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isOk());
 
         this.mockMvc.perform(put("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 9, \"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isOk());
     }
@@ -160,13 +136,13 @@ class UserControllerTest {
 
         this.mockMvc.perform(post("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 10, \"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isOk());
 
         this.mockMvc.perform(put("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 10, \"email\": \"vit@ekb650g@mail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"email\": \"vit@ekb650g@mail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
@@ -177,13 +153,13 @@ class UserControllerTest {
 
         this.mockMvc.perform(post("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 11, \"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isOk());
 
         this.mockMvc.perform(put("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 11, \"email\": \" \", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"email\": \" \", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
@@ -194,13 +170,13 @@ class UserControllerTest {
 
         this.mockMvc.perform(post("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 12, \"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isOk());
 
         this.mockMvc.perform(put("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 12, \"email\": \"vitekb650@gmail.com\", \"login\": \" \",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \" \",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
@@ -211,13 +187,13 @@ class UserControllerTest {
 
         this.mockMvc.perform(post("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 13, \"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isOk());
 
         this.mockMvc.perform(put("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 13, \"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2025-10-22\"}"))
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2025-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
@@ -228,7 +204,7 @@ class UserControllerTest {
 
         this.mockMvc.perform(post("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 14, \"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
                 .andExpect(status().isOk());
 
@@ -237,7 +213,7 @@ class UserControllerTest {
         try {
             this.mockMvc.perform(put("http://localhost:8081/users")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"id\": 14, \"email\": \"vitekb650@gmail.com\", \"login\": \"Priest Sexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                            .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"Priest Sexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
