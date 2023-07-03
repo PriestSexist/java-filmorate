@@ -22,10 +22,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class FilmControllerTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    MockMvc mockMvc;
 
     @Autowired
-    private FilmController controller;
+    FilmController controller;
 
     @Test
     public void shouldReturnAllFilms() throws Exception {
@@ -88,19 +88,10 @@ class FilmControllerTest {
     @Test
     public void shouldNotPostFilmWithInvalidReleaseDate() {
 
-        int flag;
-
-        try {
-            this.mockMvc.perform(post("http://localhost:8081/films")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"1895-12-27\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                    .andDo(print());
-            flag = 1;
-
-        } catch (Exception exception) {
-            flag = 0;
-        }
-        Assertions.assertEquals(0, flag);
+        Assertions.assertThrows(Exception.class, () -> this.mockMvc.perform(post("http://localhost:8081/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"1895-12-27\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
+                        .andDo(print()));
     }
 
     @Test
@@ -191,26 +182,17 @@ class FilmControllerTest {
     @Test
     public void shouldNotPutFilmWithInvalidReleaseDate() throws Exception {
 
-        int flag;
-
         this.mockMvc.perform(post("http://localhost:8081/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
                 .andDo(print())
                 .andExpect(status().isOk());
 
-        try {
-            this.mockMvc.perform(put("http://localhost:8081/films")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"id\": \"1\", \"name\": \"Stas Live\", \"releaseDate\": \"1895-12-27\", \"duration\": 120, \"description\": \"Stas hates everyone\"}"))
-                    .andDo(print())
-                    .andExpect(status().isBadRequest())
-                    .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
-            flag = 1;
-        } catch (Exception exception) {
-            flag = 0;
-        }
-        Assertions.assertEquals(0, flag);
+        Assertions.assertThrows(Exception.class, () -> this.mockMvc.perform(put("http://localhost:8081/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"id\": \"1\", \"name\": \"Stas Live\", \"releaseDate\": \"1895-12-27\", \"duration\": 120, \"description\": \"Stas hates everyone\"}"))
+                        .andDo(print()));
+
     }
 
 }

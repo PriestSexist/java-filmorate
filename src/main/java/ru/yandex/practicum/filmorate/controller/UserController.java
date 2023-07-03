@@ -16,41 +16,42 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public class UserController {
 
-    private static final AtomicInteger count = new AtomicInteger(0);
-    HashMap<Integer, User> users = new HashMap<>();
+    private final AtomicInteger count = new AtomicInteger(0);
+    private final HashMap<Integer, User> users = new HashMap<>();
 
     @PostMapping()
     public User postUser(@Valid @RequestBody User user) throws InvalidLoginException {
-        if (!user.getLogin().contains(" ")) {
 
-            if (user.getName() == null || user.getName().isBlank()) {
-                user.setName(user.getLogin());
-            }
-            user.setId(count.incrementAndGet());
-            users.put(user.getId(), user);
-
-        } else {
+        if (user.getLogin().contains(" ")) {
             throw new InvalidLoginException("Invalid login");
         }
+
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
+
+        user.setId(count.incrementAndGet());
+        users.put(user.getId(), user);
+
         return user;
     }
 
     @PutMapping()
     public User putUser(@Valid @RequestBody User user) throws InvalidLoginException, InvalidIdentificatorException {
-        if (!user.getLogin().contains(" ")) {
 
-            if (user.getName().isBlank()) {
-                user.setName(user.getLogin());
-            }
-
-            if (users.containsKey(user.getId())) {
-                users.replace(user.getId(), user);
-            } else {
-                throw new InvalidIdentificatorException("Invalid id");
-            }
-        } else {
+        if (user.getLogin().contains(" ")) {
             throw new InvalidLoginException("Invalid login");
         }
+
+        if (user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
+
+        if (!users.containsKey(user.getId())) {
+            throw new InvalidIdentificatorException("Invalid id");
+        }
+
+        users.replace(user.getId(), user);
         return user;
     }
 

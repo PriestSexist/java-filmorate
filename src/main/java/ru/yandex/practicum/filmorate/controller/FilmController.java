@@ -17,34 +17,36 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public class FilmController {
 
-    private static final AtomicInteger count = new AtomicInteger(0);
-    HashMap<Integer, Film> films = new HashMap<>();
+    private final AtomicInteger count = new AtomicInteger(0);
+    private final HashMap<Integer, Film> films = new HashMap<>();
     private static final LocalDate BIRTH_OF_CINEMA = LocalDate.of(1895, 12, 28);
 
     @PostMapping()
     public Film postFilm(@Valid @RequestBody Film film) throws InvalidReleaseDateException {
 
-        if (film.getReleaseDate().isAfter(BIRTH_OF_CINEMA) || film.getReleaseDate().equals(BIRTH_OF_CINEMA)) {
-            film.setId(count.incrementAndGet());
-            films.put(film.getId(), film);
-        } else {
+        if (!film.getReleaseDate().isAfter(BIRTH_OF_CINEMA) && !film.getReleaseDate().equals(BIRTH_OF_CINEMA)) {
             throw new InvalidReleaseDateException("Invalid release date");
         }
+
+        film.setId(count.incrementAndGet());
+        films.put(film.getId(), film);
 
         return film;
     }
 
     @PutMapping()
     public Film putFilm(@Valid @RequestBody Film film) throws InvalidReleaseDateException, InvalidIdentificatorException {
-        if (film.getReleaseDate().isAfter(BIRTH_OF_CINEMA) || film.getReleaseDate().equals(BIRTH_OF_CINEMA)) {
-            if (films.containsKey(film.getId())) {
-                films.replace(film.getId(), film);
-            } else {
-                throw new InvalidIdentificatorException("Invalid id");
-            }
-        } else {
+
+        if (!film.getReleaseDate().isAfter(BIRTH_OF_CINEMA) && !film.getReleaseDate().equals(BIRTH_OF_CINEMA)) {
             throw new InvalidReleaseDateException("Invalid release date");
         }
+
+        if (!films.containsKey(film.getId())) {
+            throw new InvalidIdentificatorException("Invalid id");
+        }
+
+        films.replace(film.getId(), film);
+
         return film;
     }
 

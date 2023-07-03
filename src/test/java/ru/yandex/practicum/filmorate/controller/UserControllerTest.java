@@ -22,10 +22,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class UserControllerTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    MockMvc mockMvc;
 
     @Autowired
-    private UserController controller;
+    UserController controller;
 
     @Test
     public void shouldReturnAllUsers() throws Exception {
@@ -98,21 +98,10 @@ class UserControllerTest {
     @Test
     public void shouldNotPostUserWithLoginWithSpaces() {
 
-        int flag;
-
-        try {
-            this.mockMvc.perform(post("http://localhost:8081/users")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"Priest Sexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
-                    .andDo(print())
-                    .andExpect(status().isBadRequest())
-                    .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
-            flag = 1;
-
-        } catch (Exception exception) {
-            flag = 0;
-        }
-        Assertions.assertEquals(0, flag);
+        Assertions.assertThrows(Exception.class, () -> this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"Priest Sexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .andDo(print()));
     }
 
     @Test
@@ -208,20 +197,9 @@ class UserControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk());
 
-        int flag;
-
-        try {
-            this.mockMvc.perform(put("http://localhost:8081/users")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"id\": \"1\", \"email\": \"vitekb650@gmail.com\", \"login\": \"Priest Sexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
-                    .andDo(print())
-                    .andExpect(status().isBadRequest())
-                    .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
-            flag = 1;
-
-        } catch (Exception exception) {
-            flag = 0;
-        }
-        Assertions.assertEquals(0, flag);
+        Assertions.assertThrows(Exception.class, () -> this.mockMvc.perform(put("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"id\": \"1\", \"email\": \"vitekb650@gmail.com\", \"login\": \"Priest Sexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                        .andDo(print()));
     }
 }
