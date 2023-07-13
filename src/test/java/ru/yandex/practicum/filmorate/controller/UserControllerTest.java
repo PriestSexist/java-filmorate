@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,10 +10,16 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import ru.yandex.practicum.filmorate.exception.user.EqualIdentifierException;
+import ru.yandex.practicum.filmorate.exception.user.InvalidLoginException;
+import ru.yandex.practicum.filmorate.exception.user.UserNotFoundException;
+import ru.yandex.practicum.filmorate.service.UserService;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
@@ -27,32 +33,56 @@ class UserControllerTest {
     @Autowired
     UserController controller;
 
-    @Test
-    public void shouldReturnAllUsers() throws Exception {
+    @Autowired
+    UserService userService;
 
-        this.mockMvc.perform(get("http://localhost:8081/users"))
-                .andDo(print())
-                .andExpect(status().isOk());
+    @AfterEach
+    public void reseter() {
+        userService.clear();
     }
 
     @Test
-    public void shouldPostUser() throws Exception {
+    public void shouldReturnAllUsers() throws Exception {
 
         this.mockMvc.perform(post("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"satori0@gmail.com\", \"login\": \"Satori\",\"name\": \"Satori\",\"birthday\": \"1989-10-24\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}"));
+
+        this.mockMvc.perform(get("http://localhost:8081/users"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("[{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]},{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}]"));
+
+    }
+
+    @Test
+    public void shouldPostUser() throws Exception {
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
     }
 
     @Test
     public void shouldPostUserWithBlankName() throws Exception {
-
         this.mockMvc.perform(post("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \" \",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
     }
 
     @Test
@@ -96,12 +126,12 @@ class UserControllerTest {
     }
 
     @Test
-    public void shouldNotPostUserWithLoginWithSpaces() {
-
-        Assertions.assertThrows(Exception.class, () -> this.mockMvc.perform(post("http://localhost:8081/users")
+    public void shouldNotPostUserWithLoginWithSpaces() throws Exception {
+        this.mockMvc.perform(post("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"Priest Sexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
-                        .andDo(print()));
+                .andDo(print())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof InvalidLoginException));
     }
 
     @Test
@@ -111,13 +141,16 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
 
         this.mockMvc.perform(put("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"id\": \"1\", \"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
     }
 
     @Test
@@ -127,7 +160,8 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
 
         this.mockMvc.perform(put("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -135,6 +169,7 @@ class UserControllerTest {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
+
     }
 
     @Test
@@ -144,7 +179,8 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
 
         this.mockMvc.perform(put("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -152,6 +188,7 @@ class UserControllerTest {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
+
     }
 
     @Test
@@ -161,7 +198,8 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
 
         this.mockMvc.perform(put("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -169,6 +207,7 @@ class UserControllerTest {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
+
     }
 
     @Test
@@ -178,7 +217,8 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
 
         this.mockMvc.perform(put("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -186,6 +226,7 @@ class UserControllerTest {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
+
     }
 
     @Test
@@ -195,11 +236,540 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
 
-        Assertions.assertThrows(Exception.class, () -> this.mockMvc.perform(put("http://localhost:8081/users")
+        this.mockMvc.perform(put("http://localhost:8081/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"id\": \"1\", \"email\": \"vitekb650@gmail.com\", \"login\": \"Priest Sexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
-                        .andDo(print()));
+                .andDo(print())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof InvalidLoginException));
+
     }
+
+    @Test
+    public void shouldGetUserById() throws Exception {
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        this.mockMvc.perform(get("http://localhost:8081/users/1"))
+                .andDo(print())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+    }
+
+    @Test
+    public void shouldNotGetUserByInvalidId() throws Exception {
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        this.mockMvc.perform(get("http://localhost:8081/users/-1"))
+                .andDo(print())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof UserNotFoundException));
+
+    }
+
+    @Test
+    public void shouldMake2UsersFriends() throws Exception {
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"satori0@gmail.com\", \"login\": \"Satori\",\"name\": \"Satori\",\"birthday\": \"1989-10-24\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}"));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/1/friends/2"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[2]}"));
+
+        assertEquals(1, userService.getUserById(2).getFriends().size());
+        assertTrue(userService.getUserById(2).getFriends().contains(1));
+    }
+
+    @Test
+    public void shouldNotMake2UsersFriendsWithInvalidUserId() throws Exception {
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"satori0@gmail.com\", \"login\": \"Satori\",\"name\": \"Satori\",\"birthday\": \"1989-10-24\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}"));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/-1/friends/2"))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof UserNotFoundException));
+
+    }
+
+    @Test
+    public void shouldNotMake2UsersFriendsWithInvalidFriendId() throws Exception {
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"satori0@gmail.com\", \"login\": \"Satori\",\"name\": \"Satori\",\"birthday\": \"1989-10-24\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}"));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/1/friends/-2"))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof UserNotFoundException));
+
+    }
+
+    @Test
+    public void shouldNotMake2UsersFriendsWithEqualId() throws Exception {
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"satori0@gmail.com\", \"login\": \"Satori\",\"name\": \"Satori\",\"birthday\": \"1989-10-24\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}"));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/1/friends/1"))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof EqualIdentifierException));
+
+    }
+
+    @Test
+    public void shouldUnmake2UsersFriends() throws Exception {
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"satori0@gmail.com\", \"login\": \"Satori\",\"name\": \"Satori\",\"birthday\": \"1989-10-24\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}"));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/1/friends/2"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[2]}"));
+
+        assertEquals(1, userService.getUserById(2).getFriends().size());
+        assertTrue(userService.getUserById(2).getFriends().contains(1));
+
+        this.mockMvc.perform(delete("http://localhost:8081/users/1/friends/2"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        assertEquals(0, userService.getUserById(2).getFriends().size());
+
+    }
+
+    @Test
+    public void shouldNotUnmake2UsersFriendsWithInvalidUserId() throws Exception {
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"satori0@gmail.com\", \"login\": \"Satori\",\"name\": \"Satori\",\"birthday\": \"1989-10-24\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}"));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/1/friends/2"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[2]}"));
+
+        assertEquals(1, userService.getUserById(2).getFriends().size());
+        assertTrue(userService.getUserById(2).getFriends().contains(1));
+
+        this.mockMvc.perform(delete("http://localhost:8081/users/-1/friends/2"))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof UserNotFoundException));
+
+        assertEquals(1, userService.getUserById(2).getFriends().size());
+        assertTrue(userService.getUserById(2).getFriends().contains(1));
+
+    }
+
+    @Test
+    public void shouldNotUnmake2UsersFriendsWithInvalidFriendId() throws Exception {
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"satori0@gmail.com\", \"login\": \"Satori\",\"name\": \"Satori\",\"birthday\": \"1989-10-24\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}"));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/1/friends/2"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[2]}"));
+
+        assertEquals(1, userService.getUserById(2).getFriends().size());
+        assertTrue(userService.getUserById(2).getFriends().contains(1));
+
+        this.mockMvc.perform(delete("http://localhost:8081/users/1/friends/-2"))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof UserNotFoundException));
+
+        assertEquals(1, userService.getUserById(2).getFriends().size());
+        assertTrue(userService.getUserById(2).getFriends().contains(1));
+
+    }
+
+    @Test
+    public void shouldNotUnmake2UsersFriendsWithEqualId() throws Exception {
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"satori0@gmail.com\", \"login\": \"Satori\",\"name\": \"Satori\",\"birthday\": \"1989-10-24\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}"));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/1/friends/2"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[2]}"));
+
+        assertEquals(1, userService.getUserById(2).getFriends().size());
+        assertTrue(userService.getUserById(2).getFriends().contains(1));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/1/friends/1"))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof EqualIdentifierException));
+
+        assertEquals(1, userService.getUserById(2).getFriends().size());
+        assertTrue(userService.getUserById(2).getFriends().contains(1));
+
+    }
+
+    @Test
+    public void shouldGetAllFriends() throws Exception {
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"satori0@gmail.com\", \"login\": \"Satori\",\"name\": \"Satori\",\"birthday\": \"1989-10-24\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}"));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/1/friends/2"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[2]}"));
+
+        assertEquals(1, userService.getUserById(2).getFriends().size());
+        assertTrue(userService.getUserById(2).getFriends().contains(1));
+
+        this.mockMvc.perform(get("http://localhost:8081/users/1/friends"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("[{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[1]}]"));
+
+    }
+
+    @Test
+    public void shouldNotGetAllFriendsWithInvalidId() throws Exception {
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"satori0@gmail.com\", \"login\": \"Satori\",\"name\": \"Satori\",\"birthday\": \"1989-10-24\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}"));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/1/friends/2"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[2]}"));
+
+        assertEquals(1, userService.getUserById(2).getFriends().size());
+        assertTrue(userService.getUserById(2).getFriends().contains(1));
+
+        this.mockMvc.perform(get("http://localhost:8081/users/-1/friends"))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof UserNotFoundException));
+    }
+
+    @Test
+    public void shouldGetCommonFriends() throws Exception {
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"satori0@gmail.com\", \"login\": \"Satori\",\"name\": \"Satori\",\"birthday\": \"1989-10-24\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"uralov@gmail.com\", \"login\": \"Uralov\",\"name\": \"Semen\",\"birthday\": \"1986-01-16\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":3,\"email\":\"uralov@gmail.com\",\"login\":\"Uralov\",\"name\":\"Semen\",\"birthday\":\"1986-01-16\",\"friends\":[]}"));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/1/friends/3"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[3]}"));
+
+        assertEquals(1, userService.getUserById(3).getFriends().size());
+        assertTrue(userService.getUserById(3).getFriends().contains(1));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/2/friends/3"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[3]}"));
+
+        assertEquals(2, userService.getUserById(3).getFriends().size());
+        assertTrue(userService.getUserById(3).getFriends().contains(1));
+        assertTrue(userService.getUserById(3).getFriends().contains(2));
+
+        this.mockMvc.perform((get("http://localhost:8081/users/1/friends/common/2")))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("[{\"id\":3,\"email\":\"uralov@gmail.com\",\"login\":\"Uralov\",\"name\":\"Semen\",\"birthday\":\"1986-01-16\",\"friends\":[1,2]}]"));
+
+    }
+
+    @Test
+    public void shouldNotGetCommonFriendsWithInvalidUserId() throws Exception {
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"satori0@gmail.com\", \"login\": \"Satori\",\"name\": \"Satori\",\"birthday\": \"1989-10-24\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"uralov@gmail.com\", \"login\": \"Uralov\",\"name\": \"Semen\",\"birthday\": \"1986-01-16\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":3,\"email\":\"uralov@gmail.com\",\"login\":\"Uralov\",\"name\":\"Semen\",\"birthday\":\"1986-01-16\",\"friends\":[]}"));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/1/friends/3"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[3]}"));
+
+        assertEquals(1, userService.getUserById(3).getFriends().size());
+        assertTrue(userService.getUserById(3).getFriends().contains(1));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/2/friends/3"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[3]}"));
+
+        assertEquals(2, userService.getUserById(3).getFriends().size());
+        assertTrue(userService.getUserById(3).getFriends().contains(1));
+        assertTrue(userService.getUserById(3).getFriends().contains(2));
+
+        this.mockMvc.perform((get("http://localhost:8081/users/-1/friends/common/2")))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof UserNotFoundException));
+
+
+    }
+
+    @Test
+    public void shouldNotGetCommonFriendsWithInvalidOtherId() throws Exception {
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"satori0@gmail.com\", \"login\": \"Satori\",\"name\": \"Satori\",\"birthday\": \"1989-10-24\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"uralov@gmail.com\", \"login\": \"Uralov\",\"name\": \"Semen\",\"birthday\": \"1986-01-16\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":3,\"email\":\"uralov@gmail.com\",\"login\":\"Uralov\",\"name\":\"Semen\",\"birthday\":\"1986-01-16\",\"friends\":[]}"));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/1/friends/3"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[3]}"));
+
+        assertEquals(1, userService.getUserById(3).getFriends().size());
+        assertTrue(userService.getUserById(3).getFriends().contains(1));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/2/friends/3"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[3]}"));
+
+        assertEquals(2, userService.getUserById(3).getFriends().size());
+        assertTrue(userService.getUserById(3).getFriends().contains(1));
+        assertTrue(userService.getUserById(3).getFriends().contains(2));
+
+        this.mockMvc.perform((get("http://localhost:8081/users/1/friends/common/-2")))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof UserNotFoundException));
+
+    }
+
+    @Test
+    public void shouldNotGetcommonFriendsWithEqualId() throws Exception {
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"satori0@gmail.com\", \"login\": \"Satori\",\"name\": \"Satori\",\"birthday\": \"1989-10-24\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}"));
+
+        this.mockMvc.perform(post("http://localhost:8081/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"uralov@gmail.com\", \"login\": \"Uralov\",\"name\": \"Semen\",\"birthday\": \"1986-01-16\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":3,\"email\":\"uralov@gmail.com\",\"login\":\"Uralov\",\"name\":\"Semen\",\"birthday\":\"1986-01-16\",\"friends\":[]}"));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/1/friends/3"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[3]}"));
+
+        assertEquals(1, userService.getUserById(3).getFriends().size());
+        assertTrue(userService.getUserById(3).getFriends().contains(1));
+
+        this.mockMvc.perform(put("http://localhost:8081/users/2/friends/3"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[3]}"));
+
+        assertEquals(2, userService.getUserById(3).getFriends().size());
+        assertTrue(userService.getUserById(3).getFriends().contains(1));
+        assertTrue(userService.getUserById(3).getFriends().contains(2));
+
+        this.mockMvc.perform((get("http://localhost:8081/users/1/friends/common/1")))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof EqualIdentifierException));
+
+    }
+
 }

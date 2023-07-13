@@ -7,6 +7,7 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.PastOrPresent;
 import java.time.LocalDate;
+import java.util.HashSet;
 
 @Data
 @Builder
@@ -19,4 +20,5 @@ public class User {
     private String name;
     @PastOrPresent(message = "Birthday should be before current time")
     private LocalDate birthday;
+    private final HashSet<Integer> friends = new HashSet<>();
 }

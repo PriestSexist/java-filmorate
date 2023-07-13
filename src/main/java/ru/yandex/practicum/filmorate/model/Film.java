@@ -7,6 +7,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.HashSet;
 
 @Data
 @Builder
@@ -20,4 +21,5 @@ public class Film {
     private int duration; // В минутах
     @Size(max = 200, message = "description should be 200 symbols or less")
     private String description;
+    private final HashSet<Integer> peopleLiked = new HashSet<>();
 }
