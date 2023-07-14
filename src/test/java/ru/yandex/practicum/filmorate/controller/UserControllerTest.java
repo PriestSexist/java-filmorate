@@ -14,6 +14,7 @@ import ru.yandex.practicum.filmorate.exception.user.EqualIdentifierException;
 import ru.yandex.practicum.filmorate.exception.user.InvalidLoginException;
 import ru.yandex.practicum.filmorate.exception.user.UserNotFoundException;
 import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -36,9 +37,12 @@ class UserControllerTest {
     @Autowired
     UserService userService;
 
+    @Autowired
+    UserStorage userStorage;
+
     @AfterEach
     public void reseter() {
-        userService.clear();
+        userStorage.clear();
     }
 
     @Test

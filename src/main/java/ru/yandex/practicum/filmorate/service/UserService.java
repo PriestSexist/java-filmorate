@@ -6,14 +6,13 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class UserService {
 
-    private AtomicInteger counter = new AtomicInteger(0);
     private final UserStorage userStorage;
 
     @Autowired
@@ -22,8 +21,6 @@ public class UserService {
     }
 
     public User postUser(User user) {
-
-        user.setId(counter.incrementAndGet());
 
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
@@ -41,7 +38,7 @@ public class UserService {
         return userStorage.putUser(user);
     }
 
-    public HashMap<Integer, User> getUsers() {
+    public Map<Integer, User> getUsers() {
         return userStorage.getUsers();
     }
 
@@ -69,7 +66,7 @@ public class UserService {
         return user;
     }
 
-    public ArrayList<User> getFriends(int id) {
+    public List<User> getFriends(int id) {
 
         HashSet<Integer> friendsIds = userStorage.getUserById(id).getFriends();
         ArrayList<User> friends = new ArrayList<>();
@@ -79,21 +76,17 @@ public class UserService {
         return friends;
     }
 
-    public ArrayList<User> getCommonFriends(int id, int otherId) {
+    public List<User> getCommonFriends(int id, int otherId) {
 
-        HashSet<Integer> myFriendsIds = userStorage.getUserById(id).getFriends();
-        HashSet<Integer> otherFriendsIds = userStorage.getUserById(otherId).getFriends();
-        ArrayList<User> commonFriends = new ArrayList<>();
+        HashSet<Integer> myFriendsIds = new HashSet<>(userStorage.getUserById(id).getFriends());
+        HashSet<Integer> otherFriendsIds = new HashSet<>(userStorage.getUserById(otherId).getFriends());
+        List<User> commonFriends = new ArrayList<>();
 
-        myFriendsIds.stream()
-                .filter(otherFriendsIds::contains)
-                .forEach(commonId -> commonFriends.add(userStorage.getUserById(commonId)));
+        myFriendsIds.retainAll(otherFriendsIds);
+
+        myFriendsIds.forEach(commonId -> commonFriends.add(userStorage.getUserById(commonId)));
 
         return commonFriends;
     }
 
-    public void clear() {
-        userStorage.getUsers().clear();
-        counter = new AtomicInteger(0);
-    }
 }

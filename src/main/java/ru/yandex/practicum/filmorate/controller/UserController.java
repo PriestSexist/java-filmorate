@@ -10,7 +10,8 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
@@ -49,8 +50,8 @@ public class UserController {
     }
 
     @GetMapping()
-    public ArrayList<User> getUsers() {
-        return new ArrayList<>(userService.getUsers().values());
+    public Collection<User> getUsers() {
+        return userService.getUsers().values();
     }
 
     @GetMapping("/{id}")
@@ -86,7 +87,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}/friends")
-    public ArrayList<User> getFriends(@PathVariable int id) {
+    public List<User> getFriends(@PathVariable int id) {
         if (!userService.getUsers().containsKey(id)) {
             throw new UserNotFoundException("User not found");
         }
@@ -94,7 +95,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
-    public ArrayList<User> getCommonFriends(@PathVariable int id, @PathVariable int otherId) {
+    public List<User> getCommonFriends(@PathVariable int id, @PathVariable int otherId) {
         if (!userService.getUsers().containsKey(id) || !userService.getUsers().containsKey(otherId)) {
             throw new UserNotFoundException("One of the users not found");
         }

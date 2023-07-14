@@ -13,8 +13,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import ru.yandex.practicum.filmorate.exception.film.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.exception.film.InvalidReleaseDateException;
 import ru.yandex.practicum.filmorate.exception.user.UserNotFoundException;
-import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -34,15 +34,15 @@ class FilmControllerTest {
     FilmController controller;
 
     @Autowired
-    FilmService filmService;
+    FilmStorage filmStorage;
 
     @Autowired
-    UserService userService;
+    UserStorage userStorage;
 
     @AfterEach
     public void reseter() {
-        filmService.clear();
-        userService.clear();
+        filmStorage.clear();
+        userStorage.clear();
     }
 
     @Test

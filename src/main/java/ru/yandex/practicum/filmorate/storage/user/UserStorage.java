@@ -13,4 +13,6 @@ public interface UserStorage {
     HashMap<Integer, User> getUsers();
 
     User getUserById(int id);
+
+    void clear();
 }

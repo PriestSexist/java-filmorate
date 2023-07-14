@@ -12,7 +12,8 @@ import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
 import java.time.LocalDate;
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @RestController
 @RequestMapping("/films")
@@ -54,8 +55,8 @@ public class FilmController {
     }
 
     @GetMapping()
-    public ArrayList<Film> getFilms() {
-        return new ArrayList<>(filmService.getFilms().values());
+    public Collection<Film> getFilms() {
+        return filmService.getFilms().values();
     }
 
     @GetMapping("/{filmId}")
@@ -92,7 +93,7 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public ArrayList<Film> getTopFilms(@RequestParam(required = false, defaultValue = "10") int count) {
+    public List<Film> getTopFilms(@RequestParam(defaultValue = "10") int count) {
         return filmService.getTopFilms(count);
     }
 }
