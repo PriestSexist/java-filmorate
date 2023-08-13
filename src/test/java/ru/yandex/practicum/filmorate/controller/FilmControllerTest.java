@@ -1,571 +1,318 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import org.junit.jupiter.api.AfterEach;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import ru.yandex.practicum.filmorate.exception.film.FilmNotFoundException;
-import ru.yandex.practicum.filmorate.exception.film.InvalidReleaseDateException;
-import ru.yandex.practicum.filmorate.exception.user.UserNotFoundException;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import org.springframework.test.annotation.DirtiesContext;
+import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.storage.film.dao.FilmDbStorage;
+import ru.yandex.practicum.filmorate.storage.user.dao.UserDbStorage;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 
-@RunWith(SpringRunner.class)
+import static org.assertj.core.api.Assertions.assertThat;
+
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureTestDatabase
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class FilmControllerTest {
 
-    @Autowired
-    MockMvc mockMvc;
+    private final FilmDbStorage filmStorage;
+    private final UserDbStorage userStorage;
 
-    @Autowired
-    FilmController controller;
+    @Test
+    public void testPostFilm() {
+        Mpa mpa = new Mpa(5, "NC-17");
+        Genre genre = new Genre(6, "Боевик");
+        Film filmForPost = new Film(10, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
+        HashSet<Genre> genres = new HashSet<>();
 
-    @Autowired
-    FilmStorage filmStorage;
+        filmForPost.getGenres().add(genre);
+        genres.add(genre);
 
-    @Autowired
-    UserStorage userStorage;
+        Optional<Film> filmOptional = filmStorage.postFilm(filmForPost);
 
-    @AfterEach
-    public void reseter() {
-        filmStorage.clear();
-        userStorage.clear();
+        assertThat(filmOptional)
+                .isPresent()
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("id", 1))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("name", "Viktor B Live"))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("description", "Viktor B hates everyone even you."))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("releaseDate", LocalDate.of(2002, 10, 22)))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("duration", 60))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("mpa", mpa))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("genres", genres));
     }
 
     @Test
-    public void shouldReturnAllFilms() throws Exception {
+    public void testPutFilm() {
+        Mpa mpa = new Mpa(5, "NC-17");
+        Genre genre = new Genre(6, "Боевик");
+        Film filmForPost = new Film(1, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
+        Film filmForPut = new Film(1, "Stas Live", "Stas B hates everyone even you.", LocalDate.of(1989, 10, 24), 120, mpa);
 
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk());
+        HashSet<Genre> genres = new HashSet<>();
 
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"Stas Live\", \"releaseDate\": \"1989-10-24\", \"duration\": 120, \"description\": \"Stas hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk());
+        filmForPost.getGenres().add(genre);
+        filmForPut.getGenres().add(genre);
+        genres.add(genre);
 
-        this.mockMvc.perform(get("http://localhost:8081/films"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("[{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]},{\"id\":2,\"name\":\"Stas Live\",\"releaseDate\":\"1989-10-24\",\"duration\":120,\"description\":\"Stas hates everyone\",\"peopleLiked\":[]}]"));
-    }
+        filmStorage.postFilm(filmForPost);
 
-    @Test
-    public void shouldPostFilm() throws Exception {
+        Optional<Film> filmOptional = filmStorage.putFilm(filmForPut);
 
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-    }
-
-    @Test
-    public void shouldNotPostFilmWithBlankName() throws Exception {
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \" \", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
-    }
-
-    @Test
-    public void shouldNotPostFilmWithDuration0() throws Exception {
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 0, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
-    }
-
-    @Test
-    public void shouldNotPostFilmWithNegativeDuration() throws Exception {
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": -1, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
-    }
-
-    @Test
-    public void shouldNotPostFilmWithLongDescription() throws Exception {
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. \"}"))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
-    }
-
-    @Test
-    public void shouldNotPostFilmWithInvalidReleaseDate() throws Exception {
-
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"1895-12-27\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof InvalidReleaseDateException));
-    }
-
-    @Test
-    public void shouldPutFilm() throws Exception {
-
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-        this.mockMvc.perform(put("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": \"1\", \"name\": \"Stas Live\", \"releaseDate\": \"1989-10-24\", \"duration\": 120, \"description\": \"Stas hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"Stas Live\",\"releaseDate\":\"1989-10-24\",\"duration\":120,\"description\":\"Stas hates everyone\",\"peopleLiked\":[]}"));
-    }
-
-    @Test
-    public void shouldNotPutFilmWithBlankName() throws Exception {
-
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-        this.mockMvc.perform(put("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": \"1\", \"name\": \" \", \"releaseDate\": \"1989-10-24\", \"duration\": 120, \"description\": \"Stas hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
-    }
-
-    @Test
-    public void shouldNotPutFilmWithDuration0() throws Exception {
-
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-        this.mockMvc.perform(put("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": \"1\", \"name\": \"Stas Live\", \"releaseDate\": \"1989-10-24\", \"duration\": 0, \"description\": \"Stas hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
-    }
-
-    @Test
-    public void shouldNotPutFilmWithNegativeDuration() throws Exception {
-
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-        this.mockMvc.perform(put("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": \"1\", \"name\": \"Stas Live\", \"releaseDate\": \"1989-10-24\", \"duration\": -1, \"description\": \"Stas hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
-    }
-
-    @Test
-    public void shouldNotPutFilmWithLongDescription() throws Exception {
-
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-        this.mockMvc.perform(put("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": \"1\", \"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. ViktorB hates everyone. Even you. \"}"))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
-    }
-
-    @Test
-    public void shouldNotPutFilmWithInvalidReleaseDate() throws Exception {
-
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-        this.mockMvc.perform(put("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": \"1\", \"name\": \"Stas Live\", \"releaseDate\": \"1895-12-27\", \"duration\": 120, \"description\": \"Stas hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof InvalidReleaseDateException));
-    }
-
-    @Test
-    public void shouldGetFilmById() throws Exception {
-
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-        this.mockMvc.perform(get("http://localhost:8081/films/1"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
+        assertThat(filmOptional)
+                .isPresent()
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("id", 1))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("name", "Stas Live"))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("description", "Stas B hates everyone even you."))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("releaseDate", LocalDate.of(1989, 10, 24)))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("duration", 120))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("mpa", mpa))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("genres", genres));
 
     }
 
     @Test
-    public void shouldNotGetFilmByInvalidId() throws Exception {
+    public void testGetFilms() {
+        Mpa mpa = new Mpa(5, "NC-17");
+        Genre genre = new Genre(6, "Боевик");
+        Film filmForPost1 = new Film(1, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
+        Film filmForPost2 = new Film(2, "Stas Live", "Stas B hates everyone even you.", LocalDate.of(1989, 10, 24), 120, mpa);
 
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
+        HashSet<Genre> genres = new HashSet<>();
 
-        this.mockMvc.perform(get("http://localhost:8081/films/-1"))
-                .andDo(print())
-                .andExpect(status().isNotFound())
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof FilmNotFoundException));
+        filmForPost1.getGenres().add(genre);
+        filmForPost2.getGenres().add(genre);
+        genres.add(genre);
+
+        filmStorage.postFilm(filmForPost1);
+        filmStorage.postFilm(filmForPost2);
+
+        List<Film> films = (List<Film>) filmStorage.getFilms();
+
+        Optional<Film> filmOptional1 = Optional.of(films.get(0));
+        Optional<Film> filmOptional2 = Optional.of(films.get(1));
+
+        assertThat(filmOptional1)
+                .isPresent()
+                .hasValueSatisfying(filmFromBd -> assertThat(filmFromBd).hasFieldOrPropertyWithValue("id", 1))
+                .hasValueSatisfying(filmFromBd -> assertThat(filmFromBd).hasFieldOrPropertyWithValue("name", "Viktor B Live"))
+                .hasValueSatisfying(filmFromBd -> assertThat(filmFromBd).hasFieldOrPropertyWithValue("description", "Viktor B hates everyone even you."))
+                .hasValueSatisfying(filmFromBd -> assertThat(filmFromBd).hasFieldOrPropertyWithValue("releaseDate", LocalDate.of(2002, 10, 22)))
+                .hasValueSatisfying(filmFromBd -> assertThat(filmFromBd).hasFieldOrPropertyWithValue("duration", 60))
+                .hasValueSatisfying(filmFromBd -> assertThat(filmFromBd).hasFieldOrPropertyWithValue("mpa", mpa))
+                .hasValueSatisfying(filmFromBd -> assertThat(filmFromBd).hasFieldOrPropertyWithValue("genres", genres));
+
+
+        assertThat(filmOptional2)
+                .isPresent()
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("id", 2))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("name", "Stas Live"))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("description", "Stas B hates everyone even you."))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("releaseDate", LocalDate.of(1989, 10, 24)))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("duration", 120))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("mpa", mpa))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("genres", genres));
     }
 
     @Test
-    public void shouldPutLikeToFilm() throws Exception {
+    public void testGetFilmById() {
+        Mpa mpa = new Mpa(5, "NC-17");
+        Genre genre = new Genre(6, "Боевик");
+        Film filmForPost = new Film(1, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
+        HashSet<Genre> genres = new HashSet<>();
 
-        this.mockMvc.perform(post("http://localhost:8081/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+        filmForPost.getGenres().add(genre);
+        genres.add(genre);
 
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
+        filmStorage.postFilm(filmForPost);
 
-        this.mockMvc.perform(put("http://localhost:8081/films/1/like/1"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[1]}"));
-    }
+        Optional<Film> filmOptional = filmStorage.getFilmById(filmForPost.getId());
 
-    @Test
-    public void shouldNotPutLikeToFilmWithInvalidUserId() throws Exception {
-
-        this.mockMvc.perform(post("http://localhost:8081/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
-
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-        this.mockMvc.perform(put("http://localhost:8081/films/1/like/-1"))
-                .andDo(print())
-                .andExpect(status().isNotFound())
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof UserNotFoundException));
-    }
-
-    @Test
-    public void shouldNotPutLikeToFilmWithInvalidFilmId() throws Exception {
-
-        this.mockMvc.perform(post("http://localhost:8081/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
-
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-        this.mockMvc.perform(put("http://localhost:8081/films/-1/like/1"))
-                .andDo(print())
-                .andExpect(status().isNotFound())
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof FilmNotFoundException));
-    }
-
-    @Test
-    public void shouldDeleteLikeToFilm() throws Exception {
-
-        this.mockMvc.perform(post("http://localhost:8081/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
-
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-        this.mockMvc.perform(put("http://localhost:8081/films/1/like/1"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[1]}"));
-
-        this.mockMvc.perform(delete("http://localhost:8081/films/1/like/1"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-    }
-
-    @Test
-    public void shouldNotDeleteLikeToFilmWithInvalidUserId() throws Exception {
-
-        this.mockMvc.perform(post("http://localhost:8081/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
-
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-        this.mockMvc.perform(put("http://localhost:8081/films/1/like/1"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[1]}"));
-
-        this.mockMvc.perform(delete("http://localhost:8081/films/1/like/-1"))
-                .andDo(print())
-                .andExpect(status().isNotFound())
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof UserNotFoundException));
-    }
-
-    @Test
-    public void shouldNotDeleteLikeToFilmWithInvalidFilmId() throws Exception {
-
-        this.mockMvc.perform(post("http://localhost:8081/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
-
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-        this.mockMvc.perform(put("http://localhost:8081/films/1/like/1"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[1]}"));
-
-        this.mockMvc.perform(delete("http://localhost:8081/films/-1/like/1"))
-                .andDo(print())
-                .andExpect(status().isNotFound())
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof FilmNotFoundException));
-    }
-
-    @Test
-    public void shouldReturnTop3Films() throws Exception {
-
-        //Два пользователя
-        this.mockMvc.perform(post("http://localhost:8081/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
-
-        this.mockMvc.perform(post("http://localhost:8081/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\": \"satori0@gmail.com\", \"login\": \"Satori\",\"name\": \"Satori\",\"birthday\": \"1989-10-24\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}"));
-
-        //3 фильма
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live 1. Pay and repent. Repent and pay!\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live 1. Pay and repent. Repent and pay!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live 2. SCHOOL OF SOCIALISM!\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":2,\"name\":\"ViktorB Live 2. SCHOOL OF SOCIALISM!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live 3. Law on foreign agents of the RF!\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":3,\"name\":\"ViktorB Live 3. Law on foreign agents of the RF!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-        //ставят оценки
-        this.mockMvc.perform(put("http://localhost:8081/films/1/like/1"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live 1. Pay and repent. Repent and pay!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[1]}"));
-
-        this.mockMvc.perform(put("http://localhost:8081/films/1/like/2"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live 1. Pay and repent. Repent and pay!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[1,2]}"));
-
-        this.mockMvc.perform(put("http://localhost:8081/films/3/like/2"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":3,\"name\":\"ViktorB Live 3. Law on foreign agents of the RF!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[2]}"));
-
-        //вывод популярного
-        this.mockMvc.perform(get("http://localhost:8081/films/popular?count=3"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("[{\"id\":1,\"name\":\"ViktorB Live 1. Pay and repent. Repent and pay!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[1,2]},{\"id\":3,\"name\":\"ViktorB Live 3. Law on foreign agents of the RF!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[2]},{\"id\":2,\"name\":\"ViktorB Live 2. SCHOOL OF SOCIALISM!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}]"));
+        assertThat(filmOptional)
+                .isPresent()
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("id", 1))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("name", "Viktor B Live"))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("description", "Viktor B hates everyone even you."))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("releaseDate", LocalDate.of(2002, 10, 22)))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("duration", 60))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("mpa", mpa))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("genres", genres));
 
     }
 
     @Test
-    public void shouldReturnTop4FilmsButWithoutCount() throws Exception {
+    public void testPutLikeToFilm() {
+        User userForPost = new User(1, "vitekb650@gmaill.com", "PriestSexist", "Viktor", LocalDate.of(2002, 10, 22));
+        userStorage.postUser(userForPost);
 
-        //Два пользователя
-        this.mockMvc.perform(post("http://localhost:8081/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\": \"vitekb650@gmail.com\", \"login\": \"PriestSexist\",\"name\": \"PriestSexist\",\"birthday\": \"2002-10-22\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"email\":\"vitekb650@gmail.com\",\"login\":\"PriestSexist\",\"name\":\"PriestSexist\",\"birthday\":\"2002-10-22\",\"friends\":[]}"));
+        Mpa mpa = new Mpa(5, "NC-17");
+        Genre genre = new Genre(6, "Боевик");
+        Like like = new Like(1, 1, 1);
+        Film filmForPost = new Film(1, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
+        HashSet<Genre> genres = new HashSet<>();
+        HashSet<Like> likes = new HashSet<>();
 
-        this.mockMvc.perform(post("http://localhost:8081/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\": \"satori0@gmail.com\", \"login\": \"Satori\",\"name\": \"Satori\",\"birthday\": \"1989-10-24\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":2,\"email\":\"satori0@gmail.com\",\"login\":\"Satori\",\"name\":\"Satori\",\"birthday\":\"1989-10-24\",\"friends\":[]}"));
+        filmForPost.getGenres().add(genre);
+        genres.add(genre);
+        likes.add(like);
 
-        //4 фильма
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live 1. Pay and repent. Repent and pay!\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live 1. Pay and repent. Repent and pay!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
+        filmStorage.postFilm(filmForPost);
 
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live 2. SCHOOL OF SOCIALISM!\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":2,\"name\":\"ViktorB Live 2. SCHOOL OF SOCIALISM!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
+        Optional<Film> filmOptional = filmStorage.putLikeToFilm(filmForPost.getId(), userForPost.getId());
 
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live 3. Law on foreign agents of the RF!\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":3,\"name\":\"ViktorB Live 3. Law on foreign agents of the RF!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-        this.mockMvc.perform(post("http://localhost:8081/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"ViktorB Live 4. Lokimin is not going on tour in Russia!\", \"releaseDate\": \"2002-10-22\", \"duration\": 60, \"description\": \"ViktorB hates everyone\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":4,\"name\":\"ViktorB Live 4. Lokimin is not going on tour in Russia!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}"));
-
-        //ставят оценки
-        this.mockMvc.perform(put("http://localhost:8081/films/1/like/1"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live 1. Pay and repent. Repent and pay!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[1]}"));
-
-        this.mockMvc.perform(put("http://localhost:8081/films/1/like/2"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":1,\"name\":\"ViktorB Live 1. Pay and repent. Repent and pay!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[1,2]}"));
-
-        this.mockMvc.perform(put("http://localhost:8081/films/3/like/2"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":3,\"name\":\"ViktorB Live 3. Law on foreign agents of the RF!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[2]}"));
-
-        this.mockMvc.perform(put("http://localhost:8081/films/4/like/1"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":4,\"name\":\"ViktorB Live 4. Lokimin is not going on tour in Russia!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[1]}"));
-
-        this.mockMvc.perform(put("http://localhost:8081/films/4/like/2"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"id\":4,\"name\":\"ViktorB Live 4. Lokimin is not going on tour in Russia!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[1,2]}"));
-
-        //вывод популярного
-        this.mockMvc.perform(get("http://localhost:8081/films/popular"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string("[{\"id\":1,\"name\":\"ViktorB Live 1. Pay and repent. Repent and pay!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[1,2]},{\"id\":4,\"name\":\"ViktorB Live 4. Lokimin is not going on tour in Russia!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[1,2]},{\"id\":3,\"name\":\"ViktorB Live 3. Law on foreign agents of the RF!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[2]},{\"id\":2,\"name\":\"ViktorB Live 2. SCHOOL OF SOCIALISM!\",\"releaseDate\":\"2002-10-22\",\"duration\":60,\"description\":\"ViktorB hates everyone\",\"peopleLiked\":[]}]"));
+        assertThat(filmOptional)
+                .isPresent()
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("id", 1))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("name", "Viktor B Live"))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("description", "Viktor B hates everyone even you."))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("releaseDate", LocalDate.of(2002, 10, 22)))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("duration", 60))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("mpa", mpa))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("genres", genres))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("likes", likes));
 
     }
+
+    @Test
+    public void testDeleteLikeToFilm() {
+        User userForPost = new User(1, "vitekb650@gmaill.com", "PriestSexist", "Viktor", LocalDate.of(2002, 10, 22));
+        userStorage.postUser(userForPost);
+
+        Mpa mpa = new Mpa(5, "NC-17");
+        Genre genre = new Genre(6, "Боевик");
+        Film filmForPost = new Film(1, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
+        HashSet<Genre> genres = new HashSet<>();
+        HashSet<Like> likes = new HashSet<>();
+
+        filmForPost.getGenres().add(genre);
+        genres.add(genre);
+
+        filmStorage.postFilm(filmForPost);
+        filmStorage.putLikeToFilm(filmForPost.getId(), userForPost.getId());
+
+        Optional<Film> filmOptional = filmStorage.deleteLikeFromFilm(filmForPost.getId(), userForPost.getId());
+
+        assertThat(filmOptional)
+                .isPresent()
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("id", 1))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("name", "Viktor B Live"))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("description", "Viktor B hates everyone even you."))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("releaseDate", LocalDate.of(2002, 10, 22)))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("duration", 60))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("mpa", mpa))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("genres", genres))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("likes", likes));
+
+    }
+
+    @Test
+    public void testGetGenreById() {
+        Optional<Genre> genreOptional = filmStorage.getGenreById(6);
+
+        assertThat(genreOptional)
+                .isPresent()
+                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("id", 6))
+                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("name", "Боевик"));
+
+    }
+
+    @Test
+    public void testGetAllGenres() {
+        List<Genre> genres = (List<Genre>) filmStorage.getGenres();
+
+        Optional<Genre> genre1FromBd = Optional.of(genres.get(0));
+        Optional<Genre> genre2FromBd = Optional.of(genres.get(1));
+        Optional<Genre> genre3FromBd = Optional.of(genres.get(2));
+        Optional<Genre> genre4FromBd = Optional.of(genres.get(3));
+        Optional<Genre> genre5FromBd = Optional.of(genres.get(4));
+        Optional<Genre> genre6FromBd = Optional.of(genres.get(5));
+
+        assertThat(genre1FromBd)
+                .isPresent()
+                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("id", 1))
+                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("name", "Комедия"));
+
+        assertThat(genre2FromBd)
+                .isPresent()
+                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("id", 2))
+                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("name", "Драма"));
+
+        assertThat(genre3FromBd)
+                .isPresent()
+                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("id", 3))
+                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("name", "Мультфильм"));
+
+        assertThat(genre4FromBd)
+                .isPresent()
+                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("id", 4))
+                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("name", "Триллер"));
+
+        assertThat(genre5FromBd)
+                .isPresent()
+                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("id", 5))
+                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("name", "Документальный"));
+
+        assertThat(genre6FromBd)
+                .isPresent()
+                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("id", 6))
+                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("name", "Боевик"));
+
+    }
+
+    @Test
+    public void testGetMpaById() {
+        Optional<Mpa> mpaOptional = filmStorage.getMpaById(1);
+
+        assertThat(mpaOptional)
+                .isPresent()
+                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("id", 1))
+                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("name", "G"));
+
+    }
+
+    @Test
+    public void testGetAllMpas() {
+        List<Mpa> mpas = (List<Mpa>) filmStorage.getMpas();
+
+        Optional<Mpa> mpa1FromBd = Optional.of(mpas.get(0));
+        Optional<Mpa> mpa2FromBd = Optional.of(mpas.get(1));
+        Optional<Mpa> mpa3FromBd = Optional.of(mpas.get(2));
+        Optional<Mpa> mpa4FromBd = Optional.of(mpas.get(3));
+        Optional<Mpa> mpa5FromBd = Optional.of(mpas.get(4));
+
+        assertThat(mpa1FromBd)
+                .isPresent()
+                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("id", 1))
+                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("name", "G"));
+
+        assertThat(mpa2FromBd)
+                .isPresent()
+                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("id", 2))
+                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("name", "PG"));
+
+        assertThat(mpa3FromBd)
+                .isPresent()
+                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("id", 3))
+                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("name", "PG-13"));
+
+        assertThat(mpa4FromBd)
+                .isPresent()
+                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("id", 4))
+                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("name", "R"));
+
+        assertThat(mpa5FromBd)
+                .isPresent()
+                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("id", 5))
+                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("name", "NC-17"));
+
+    }
+
 
 }

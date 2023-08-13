@@ -11,7 +11,6 @@ import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
 import java.util.Collection;
-import java.util.List;
 
 @RestController
 @RequestMapping("/users")
@@ -32,7 +31,7 @@ public class UserController {
             throw new InvalidLoginException("Invalid login");
         }
 
-        return userService.postUser(user);
+        return userService.postUser(user).get();
     }
 
     @PutMapping()
@@ -42,61 +41,61 @@ public class UserController {
             throw new InvalidLoginException("Invalid login");
         }
 
-        if (!userService.getUsers().containsKey(user.getId())) {
+        if (userService.getUserById(user.getId()).isEmpty()) {
             throw new UserNotFoundException("User not found");
         }
 
-        return userService.putUser(user);
+        return userService.putUser(user).get();
     }
 
     @GetMapping()
     public Collection<User> getUsers() {
-        return userService.getUsers().values();
+        return userService.getUsers();
     }
 
     @GetMapping("/{id}")
     public User getUsersById(@PathVariable int id) {
-        if (!userService.getUsers().containsKey(id)) {
+        if (userService.getUserById(id).isEmpty()) {
             throw new UserNotFoundException("User not found");
         }
-        return userService.getUserById(id);
+        return userService.getUserById(id).get();
     }
 
     @PutMapping("/{id}/friends/{friendId}")
     public User putUserFriend(@PathVariable int id, @PathVariable int friendId) {
-        if (!userService.getUsers().containsKey(id) || !userService.getUsers().containsKey(friendId)) {
+        if (userService.getUserById(id).isEmpty() || userService.getUserById(friendId).isEmpty()) {
             throw new UserNotFoundException("One of the users not found");
         }
         if (id == friendId) {
             throw new EqualIdentifierException("Identifiers are equal");
         }
 
-        return userService.putUserFriend(id, friendId);
+        return userService.putUserFriend(id, friendId).get();
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
     public User deleteUserFriend(@PathVariable int id, @PathVariable int friendId) {
-        if (!userService.getUsers().containsKey(id) || !userService.getUsers().containsKey(friendId)) {
+        if (userService.getUserById(id).isEmpty() || userService.getUserById(friendId).isEmpty()) {
             throw new UserNotFoundException("One of the users not found");
         }
         if (id == friendId) {
             throw new EqualIdentifierException("Identifiers are equal");
         }
 
-        return userService.deleteUserFriend(id, friendId);
+        return userService.deleteUserFriend(id, friendId).get();
     }
 
     @GetMapping("/{id}/friends")
-    public List<User> getFriends(@PathVariable int id) {
-        if (!userService.getUsers().containsKey(id)) {
+    public Collection<User> getFriends(@PathVariable int id) {
+        if (userService.getUserById(id).isEmpty()) {
             throw new UserNotFoundException("User not found");
         }
         return userService.getFriends(id);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
-    public List<User> getCommonFriends(@PathVariable int id, @PathVariable int otherId) {
-        if (!userService.getUsers().containsKey(id) || !userService.getUsers().containsKey(otherId)) {
+    public Collection<User> getCommonFriends(@PathVariable int id, @PathVariable int otherId) {
+        if (userService.getUserById(id).isEmpty() || userService.getUserById(otherId).isEmpty()) {
             throw new UserNotFoundException("One of the users not found");
         }
         if (id == otherId) {

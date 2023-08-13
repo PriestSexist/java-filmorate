@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
@@ -11,15 +12,18 @@ import java.util.HashSet;
 
 @Data
 @Builder
+@AllArgsConstructor
 public class Film {
-
     private int id;
-    @NotBlank(message = "Name can't be blank")
+    @NotBlank(message = "Nameo can't be blank")
     private String name;
+    @Size(max = 200, message = "description should be 200 symbols or less")
+    private String description;
     private LocalDate releaseDate;
     @Positive(message = "Duration can't be zero or negative")
     private int duration; // В минутах
-    @Size(max = 200, message = "description should be 200 symbols or less")
-    private String description;
-    private final HashSet<Integer> peopleLiked = new HashSet<>();
+    private Mpa mpa;
+    private final HashSet<Genre> genres = new HashSet<>();
+    private final HashSet<Like> likes = new HashSet<>();
+
 }
