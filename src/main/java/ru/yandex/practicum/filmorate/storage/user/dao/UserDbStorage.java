@@ -12,16 +12,25 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component("userDbStorage")
 public class UserDbStorage implements UserStorage {
 
-    JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
+    private final SimpleJdbcInsert simpleJdbcInsertForUsers;
+    private final SimpleJdbcInsert simpleJdbcInsertForFriendRequests;
 
     @Autowired
     public UserDbStorage(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
+        this.simpleJdbcInsertForUsers = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("USERS")
+                .usingGeneratedKeyColumns("USER_ID");
+        this.simpleJdbcInsertForFriendRequests = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("FRIEND_REQUEST")
+                .usingGeneratedKeyColumns("FRIEND_REQUEST_ID");
     }
 
     @Override
@@ -35,25 +44,16 @@ public class UserDbStorage implements UserStorage {
         values.put("NAME", user.getName());
         values.put("BIRTHDAY", java.sql.Date.valueOf(user.getBirthday()));
 
-        // Объект для вставки значений в таблицу users через мапу
-        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
-                .withTableName("USERS")
-                .usingGeneratedKeyColumns("USER_ID");
-
         // Айдишник пользователя, который сгенерировался в бд
-        int userId = simpleJdbcInsert.executeAndReturnKey(values).intValue();
+        int userId = simpleJdbcInsertForUsers.executeAndReturnKey(values).intValue();
 
         // Не вставляю друзей и лайки, так как при post их список всегда пустой
         log.debug("Объект user с id {} занесён в таблицу users", userId);
 
-        // Обращаюсь к бд, чтобы вернуть оттуда данные, которые туда занеслись (типа микро проверки)
-        if (getUserById(userId).isPresent()) {
-            log.debug("Объект user с id {} найден в бд", userId);
-            return getUserById(userId);
-        }
+        // Меняю айди на айди из бд, ведь это всё, чем отличаются запись в бд от объекта
+        user.setId(userId);
 
-        log.debug("Объект user с id {} не найден в бд", userId);
-        return Optional.empty();
+        return Optional.of(user);
     }
 
     @Override
@@ -69,6 +69,9 @@ public class UserDbStorage implements UserStorage {
                 "NAME = ?, " +
                 "BIRTHDAY = ? " +
                 "WHERE USER_ID = ?";
+
+        ArrayList<Object[]> likes = new ArrayList<>();
+        ArrayList<Object[]> friendships = new ArrayList<>();
 
 
         // Оупшионал юзер из бд
@@ -100,9 +103,9 @@ public class UserDbStorage implements UserStorage {
 
             // А потом добавляю новые лайки от данного пользователя
             for (Like like : user.getLikes()) {
-                jdbcTemplate.update(sqlQueryInsertForLikes, like.getFilmId(), userId);
-
+                likes.add(new Object[]{like.getFilmId(), userId});
             }
+            jdbcTemplate.batchUpdate(sqlQueryInsertForLikes, likes);
         }
 
         // Проверяю, есть ли разница в друзьях юзера из бд и друзьях юзера, которого передали нам для замены
@@ -122,8 +125,9 @@ public class UserDbStorage implements UserStorage {
 
             // А потом добавляю новых друзей
             for (FriendShip friendShip : user.getFriendShips()) {
-                jdbcTemplate.update(sqlQueryInsertForFriends, userId, friendShip.getFriendId());
+                friendships.add(new Object[]{userId, friendShip.getFriendId()});
             }
+            jdbcTemplate.batchUpdate(sqlQueryInsertForFriends, friendships);
         }
 
         // Запрос на изменение основных данных самого юзера
@@ -134,43 +138,112 @@ public class UserDbStorage implements UserStorage {
                 java.sql.Date.valueOf(user.getBirthday()),
                 userId);
 
-        // Обращаюсь к бд, чтобы вернуть оттуда данные, которые туда занеслись (типа микро проверки)
-        if (getUserById(userId).isPresent()) {
-            log.debug("Объект user с id {} найден в бд", userId);
-            return getUserById(userId);
-        }
-
-        log.debug("Объект film с id {} не найден в бд", userId);
-        return Optional.empty();
+        return Optional.of(user);
     }
 
     @Override
     public Collection<User> getUsers() {
 
         // Запрос на получение всех айдишников пользователей
-        String sqlQuery = "SELECT U.USER_ID " +
-                "FROM USERS AS U ";
+        String sqlQuery = "SELECT U.USER_ID, U.EMAIL, U.LOGIN, U.NAME, U.BIRTHDAY, L.LIKE_ID, L.FILM_ID, FR.FRIEND_REQUEST_ID, FR.FRIEND_ID " +
+                "FROM USERS AS U " +
+                "LEFT JOIN LIKES AS L on U.USER_ID = L.USER_ID " +
+                "LEFT JOIN FRIEND_REQUEST AS FR on U.USER_ID = FR.USER_ID ";
 
+        int prevUserId;
         User user;
+        FriendShip friendShip;
+        Like like;
         Collection<User> users = new ArrayList<>();
 
         // Выполнение запроса
         SqlRowSet userRows = jdbcTemplate.queryForRowSet(sqlQuery);
 
-        // Прохожусь по всему результату запроса
-        while (userRows.next()) {
-            log.debug("Найден объект с id {} ", userRows.getInt("USER_ID"));
+        if (userRows.next()) {
 
-            // Достаю айдишник из запроса
-            int userId = userRows.getInt("USER_ID");
-            // Если по нему получается достать юзера, то я добавляю его в коллекцию юзеров
-            if (getUserById(userId).isPresent()) {
-                user = getUserById(userId).get();
+            log.debug("Найден объект с id {}, и логином {}", userRows.getInt("USER_ID"), userRows.getString("LOGIN"));
+
+            // Создаю объект пользователя из запроса
+            user = createUser(userRows);
+
+            // Отдельно создаю объекты для Like и FriendShip
+            like = createLike(userRows);
+            friendShip = createFriendRequest(userRows);
+
+            // Если лайк нашёлся и создался нормально, то я добавляю его фильму от пользователя
+            if (like != null) {
+                user.getLikes().add(like);
+            }
+
+            // Если дружба нашлась и создалась нормально, то я добавляю её пользователю
+            if (friendShip != null) {
+                user.getFriendShips().add(friendShip);
+            }
+
+            // Если больше строк нет, то возвращаю то, что есть
+            if (userRows.isLast()) {
                 users.add(user);
+                return users.stream().sorted(Comparator.comparingInt(User::getId)).collect(Collectors.toList());
+            }
+
+            // Если ещё есть какие-то строки,
+            // То я запоминаю айди предыдущего фильма. Он нужен, чтобы мы могли различать, где строка с новым фильмом,
+            // А где строка которая отличается только по лайкам и жанрам
+            prevUserId = userRows.getInt("USER_ID");
+
+            // Если больше 1 строки, то, либо это 1 пользователь и строки отличаются только по Friendship или Likes,
+            // Либо это другой пользователь
+            while (userRows.next()) {
+
+                if (prevUserId != userRows.getInt("USER_ID")) {
+
+                    // Добавляю пользователя в лист
+                    users.add(user);
+
+                    log.debug("Найден объект с id {}, и именем {}", userRows.getInt("USER_ID"), userRows.getString("NAME"));
+
+                    // Создаю объект пользователя из запроса
+                    user = createUser(userRows);
+
+                    // Отдельно создаю объекты для Like и FriendShip
+                    like = createLike(userRows);
+                    friendShip = createFriendRequest(userRows);
+
+                    // Если лайк нашёлся и создался нормально, то я добавляю его фильму от пользователя
+                    if (like != null) {
+                        user.getLikes().add(like);
+                    }
+
+                    // Если дружба нашлась и создалась нормально, то я добавляю её пользователю
+                    if (friendShip != null) {
+                        user.getFriendShips().add(friendShip);
+                    }
+
+                    prevUserId = userRows.getInt("FILM_ID");
+
+                } else {
+
+                    // Отдельно создаю объекты для Like и FriendShip
+                    like = createLike(userRows);
+                    friendShip = createFriendRequest(userRows);
+
+                    // Если лайк нашёлся и создался нормально, то я добавляю его фильму от пользователя
+                    if (like != null) {
+                        user.getLikes().add(like);
+                    }
+
+                    // Если дружба нашлась и создалась нормально, то я добавляю её пользователю
+                    if (friendShip != null) {
+                        user.getFriendShips().add(friendShip);
+                    }
+                }
+                // Если это была последняя строка, то следующей итерации не будет и надо добавлять сейчас
+                if (userRows.isLast()) {
+                    users.add(user);
+                }
             }
         }
-
-        return users;
+        return users.stream().sorted(Comparator.comparingInt(User::getId)).collect(Collectors.toList());
     }
 
     @Override
@@ -257,11 +330,6 @@ public class UserDbStorage implements UserStorage {
         values.put("USER_ID", userId);
         values.put("FRIEND_ID", friendId);
 
-        // Объект для вставки значений в таблицу users через мапу
-        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
-                .withTableName("FRIEND_REQUEST")
-                .usingGeneratedKeyColumns("FRIEND_REQUEST_ID");
-
         // Выполнение запроса на проверку дружбы
         SqlRowSet sqlRowSetCheckForFriendRequest = jdbcTemplate.queryForRowSet(sqlQueryCheckForFriendRequest, userId, friendId);
 
@@ -270,7 +338,7 @@ public class UserDbStorage implements UserStorage {
 
         // Если count = 0, тогда они не друзья и я делаю их друзьями
         if (sqlRowSetCheckForFriendRequest.getInt("COUNT") == 0) {
-            Number id = simpleJdbcInsert.executeAndReturnKey(values);
+            Number id = simpleJdbcInsertForFriendRequests.executeAndReturnKey(values);
             System.out.println(id);
         }
 
@@ -280,27 +348,12 @@ public class UserDbStorage implements UserStorage {
     @Override
     public Optional<User> deleteUserFriend(int userId, int friendId) {
 
-        // Запрос на проверку уже существования дружбы, если count = 1
-        String sqlQueryCheckForFriendRequest = "SELECT COUNT(*) AS COUNT " +
-                "FROM FRIEND_REQUEST " +
-                "WHERE USER_ID = ? AND FRIEND_ID = ? ";
-
-
         // Запрос на удаление дружбы
         String sqlQueryDeleteForFriendRequest = "DELETE " +
                 "FROM FRIEND_REQUEST " +
                 "WHERE USER_ID = ? AND FRIEND_ID = ? ";
 
-        // Выполняю запрос на проверку дружбы
-        SqlRowSet sqlRowSetCheckForFriendRequest = jdbcTemplate.queryForRowSet(sqlQueryCheckForFriendRequest, userId, friendId);
-
-        // Перехожу на строку с результатами
-        sqlRowSetCheckForFriendRequest.next();
-
-        // Если count = 1, тогда я удаляю дружбу
-        if (sqlRowSetCheckForFriendRequest.getInt("COUNT") == 1) {
-            jdbcTemplate.update(sqlQueryDeleteForFriendRequest, userId, friendId);
-        }
+        jdbcTemplate.update(sqlQueryDeleteForFriendRequest, userId, friendId);
 
         return getUserById(userId);
     }
@@ -317,7 +370,7 @@ public class UserDbStorage implements UserStorage {
         // Выполнение запроса
         SqlRowSet sqlRowSetForFriendsId = jdbcTemplate.queryForRowSet(sqlQueryForFriendsId, userId);
 
-        // прохожусь по всему результату запроса и, добавляю друзей а список, но если я не нашёл его, то не добавляю, а пропускаю эту итерацию
+        // прохожусь по всему результату запроса и, добавляю друзей в список, но если я не нашёл его, то не добавляю, а пропускаю эту итерацию
         while (sqlRowSetForFriendsId.next()) {
             id = sqlRowSetForFriendsId.getInt("FRIEND_ID");
             if (getUserById(id).isEmpty()) {

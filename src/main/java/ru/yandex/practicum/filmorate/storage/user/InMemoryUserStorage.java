@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
-import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.FriendShip;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -10,10 +9,9 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Component("inMemoryUserStorage")
 public class InMemoryUserStorage implements UserStorage {
 
-    private AtomicInteger counter = new AtomicInteger(0);
+    private final AtomicInteger counter = new AtomicInteger(0);
     private final Collection<User> users = new ArrayList<>();
 
     @Override

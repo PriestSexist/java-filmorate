@@ -16,14 +16,22 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
-@Component("filmDbStorage")
+@Component
 public class FilmDbStorage implements FilmStorage {
 
-    JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
+    private final SimpleJdbcInsert simpleJdbcInsertForFilms;
+    private final SimpleJdbcInsert simpleJdbcInsertForLikes;
 
     @Autowired
     public FilmDbStorage(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
+        this.simpleJdbcInsertForFilms = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("FILMS")
+                .usingGeneratedKeyColumns("FILM_ID");
+        this.simpleJdbcInsertForLikes = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("LIKES")
+                .usingGeneratedKeyColumns("LIKE_ID");
     }
 
     @Override
@@ -32,6 +40,8 @@ public class FilmDbStorage implements FilmStorage {
         // Запрос на добавление связи фильма и его жанра
         String sqlQueryForGenre = "INSERT INTO FILM_GENRE_CONNECTION(FILM_ID, GENRE_ID) " +
                 "VALUES (?, ?)";
+
+        ArrayList<Object[]> genres = new ArrayList<>();
 
         // Мапа, которая содержит данные для вставки в таблицу films.
         // Ключ - название столбца, значение - значение
@@ -42,33 +52,25 @@ public class FilmDbStorage implements FilmStorage {
         values.put("DURATION", film.getDuration());
         values.put("MPA_ID", film.getMpa().getId());
 
-        // Объект для вставки значений в таблицу films через мапу
-        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
-                .withTableName("FILMS")
-                .usingGeneratedKeyColumns("FILM_ID");
-
         // Айдишник фильма, который сгенерировался в бд
-        int filmId = simpleJdbcInsert.executeAndReturnKey(values).intValue();
+        int filmId = simpleJdbcInsertForFilms.executeAndReturnKey(values).intValue();
+
+        // Запись в бд и объект отличаются по данным только айдишником. Так что мы можем просто изменить айдишник и вернуть тот же самый объект
+        film.setId(filmId);
 
         // Вставляю жанры
         if (film.getGenres() != null) {
             log.debug("Начинаю заносить жанры в таблицу FILM_GENRE_CONNECTION");
             for (Genre genre : film.getGenres()) {
-                jdbcTemplate.update(sqlQueryForGenre, filmId, genre.getId());
+                genres.add(new Object[]{filmId, genre.getId()});
             }
+            jdbcTemplate.batchUpdate(sqlQueryForGenre, genres);
         }
 
         // Не вставляю людей, которые поставили лайки, так как при post их список всегда пустой
         log.debug("Объект film с id {} занесён в таблицу FILMS", filmId);
 
-        // Обращаюсь к бд, чтобы вернуть оттуда данные, которые туда занеслись (типа микро проверки)
-        if (getFilmById(filmId).isPresent()) {
-            log.debug("Объект film с id {} найден в бд", filmId);
-            return getFilmById(filmId);
-        }
-
-        log.debug("Объект film с id {} не найден в бд", filmId);
-        return Optional.empty();
+        return Optional.of(film);
 
     }
 
@@ -86,6 +88,9 @@ public class FilmDbStorage implements FilmStorage {
                 "DESCRIPTION = ?, " +
                 "MPA_ID = ? " +
                 "WHERE FILM_ID = ?";
+
+        ArrayList<Object[]> likes = new ArrayList<>();
+        ArrayList<Object[]> genres = new ArrayList<>();
 
         // Оупшионал фильм из бд
         Optional<Film> optionalFilmInBd = getFilmById(filmId);
@@ -116,8 +121,9 @@ public class FilmDbStorage implements FilmStorage {
 
             // А потом добавляю новых людей, которые лайкнули фильм
             for (Like like : film.getLikes()) {
-                jdbcTemplate.update(sqlQueryInsertForLikes, filmId, like.getUserId());
+                likes.add(new Object[]{filmId, like.getUserId()});
             }
+            jdbcTemplate.batchUpdate(sqlQueryInsertForLikes, likes);
         }
 
         // Проверяю, есть ли разница в жанрах фильма из бд и жанрах фильма, который передали нам для замены
@@ -137,8 +143,9 @@ public class FilmDbStorage implements FilmStorage {
 
             // А потом добавляю новые жанры
             for (Genre genre : film.getGenres()) {
-                jdbcTemplate.update(sqlQueryInsertForFilmGenreConnection, filmId, genre.getId());
+                genres.add(new Object[]{filmId, genre.getId()});
             }
+            jdbcTemplate.batchUpdate(sqlQueryInsertForFilmGenreConnection, genres);
         }
 
         // Запрос на изменение основных данных самого фильма
@@ -151,44 +158,117 @@ public class FilmDbStorage implements FilmStorage {
                 film.getId());
 
         // Обращаюсь к бд, чтобы вернуть оттуда данные, которые туда занеслись (типа микро проверки)
-        if (getFilmById(filmId).isPresent()) {
-            log.debug("Объект film с id {} найден в бд", filmId);
-            return getFilmById(filmId);
-        }
-
-        log.debug("Объект film с id {} не найден в бд", filmId);
-        return Optional.empty();
+        return Optional.of(film);
 
     }
 
     @Override
     public Collection<Film> getFilms() {
 
-        // Запрос на получение всех айдишников фильмов
-        String sqlQuery = "SELECT f.FILM_ID " +
-                "FROM FILMS AS F ";
+        // Запрос на получение всех фильмов
+        String sqlQuery = "SELECT F.FILM_ID, F.NAME, F.RELEASE_DATE, F.DURATION, F.DESCRIPTION, M.MPA_ID, M.NAME AS MNAME, LIKE_ID, L.USER_ID, G.GENRE_ID, G.NAME AS GNAME " +
+                "FROM FILMS AS F " +
+                "LEFT JOIN LIKES AS L on F.FILM_ID = L.FILM_ID " +
+                "LEFT JOIN MPA AS M on F.MPA_ID = M.MPA_ID " +
+                "LEFT JOIN FILM_GENRE_CONNECTION AS FGC on F.FILM_ID = fgc.FILM_ID " +
+                "LEFT JOIN GENRES AS G on FGC.GENRE_ID = G.GENRE_ID ";
 
+        int prevFilmId;
         Film film;
+        Genre genre;
+        Like like;
         Collection<Film> films = new ArrayList<>();
 
         // Выполнение запроса
         SqlRowSet userRows = jdbcTemplate.queryForRowSet(sqlQuery);
 
-        // Прохожусь по всему результату запроса
-        while (userRows.next()) {
-            log.debug("Найден объект с id {} ", userRows.getInt("FILM_ID"));
+        // Делаю из 1 строки объект
+        if (userRows.next()) {
 
-            // Достаю айдишник из запроса
-            int filmId = userRows.getInt("FILM_ID");
-            // Если по нему получается достать фильм, то я добавляю его в коллекцию фильмов
-            if (getFilmById(filmId).isPresent()) {
-                film = getFilmById(filmId).get();
+            log.debug("Найден объект с id {}, и именем {}", userRows.getInt("FILM_ID"), userRows.getString("NAME"));
+
+            // Создаю объект фильма из запроса
+            film = createFilm(userRows);
+
+            // Отдельно создаю объекты для Like и Genre
+            like = createLike(userRows);
+            genre = createGenre(userRows);
+
+            // Если лайк нашёлся и создался нормально, то я добавляю его фильму
+            if (like != null) {
+                film.getLikes().add(like);
+            }
+
+            // Если жанр нашёлся и создался нормально, то я добавляю его фильму
+            if (genre != null) {
+                film.getGenres().add(genre);
+            }
+
+            // Если это была первая и последняя строка, то вайл не запустится и надо добавлять тут
+            if (userRows.isLast()) {
                 films.add(film);
+                return films.stream().sorted(Comparator.comparingInt(Film::getId)).collect(Collectors.toList());
+            }
+
+            // Если ещё есть какие-то строки, то я
+            // Запоминаю айди предыдущего фильма. Он нужен, чтобы мы могли различать, где строка с новым фильмом,
+            // А где строка которая отличается только по лайкам и жанрам
+            prevFilmId = userRows.getInt("FILM_ID");
+
+            // Если больше 1 строки, то либо это 1 фильм и строки отличаются только по Genres или Likes, сл-но меняю их.
+            // Либо это другой фильм
+            while (userRows.next()) {
+
+                if (prevFilmId != userRows.getInt("FILM_ID")) {
+
+                    // Добавляю фильм в лист
+                    films.add(film);
+
+                    log.debug("Найден объект с id {}, и именем {}", userRows.getInt("FILM_ID"), userRows.getString("NAME"));
+
+                    // Создаю объект фильма из запроса
+                    film = createFilm(userRows);
+
+                    // Отдельно создаю объекты для Like и Genre
+                    like = createLike(userRows);
+                    genre = createGenre(userRows);
+
+                    // Если лайк нашёлся и создался нормально, то я добавляю его фильму
+                    if (like != null) {
+                        film.getLikes().add(like);
+                    }
+
+                    // Если жанр нашёлся и создался нормально, то я добавляю его фильму
+                    if (genre != null) {
+                        film.getGenres().add(genre);
+                    }
+
+                    prevFilmId = userRows.getInt("FILM_ID");
+
+                } else {
+
+                    // Отдельно создаю объекты для like и Genres и добавляю их в объект фильма
+                    like = createLike(userRows);
+                    genre = createGenre(userRows);
+
+                    // Если лайк нашёлся и создался нормально, то я добавляю его фильму
+                    if (like != null) {
+                        film.getLikes().add(like);
+                    }
+
+                    // Если жанр нашёлся и создался нормально, то я добавляю его фильму
+                    if (genre != null) {
+                        film.getGenres().add(genre);
+                    }
+                }
+
+                // Если это была последняя строка, то следующей итерации не будет и надо добавлять сейчас
+                if (userRows.isLast()) {
+                    films.add(film);
+                }
             }
         }
-
         return films.stream().sorted(Comparator.comparingInt(Film::getId)).collect(Collectors.toList());
-
     }
 
     @Override
@@ -291,13 +371,8 @@ public class FilmDbStorage implements FilmStorage {
         values.put("FILM_ID", filmId);
         values.put("USER_ID", userId);
 
-        // Объект для добавления
-        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
-                .withTableName("LIKES")
-                .usingGeneratedKeyColumns("LIKE_ID");
-
         // Выполняю запрос и ставлю лайк фильму
-        int id = simpleJdbcInsert.executeAndReturnKey(values).intValue();
+        int id = simpleJdbcInsertForLikes.executeAndReturnKey(values).intValue();
 
         log.debug("Лайк film с id {} поставлен пользователем с id {} под следующим id: {}", filmId, userId, id);
 
@@ -307,148 +382,17 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Optional<Film> deleteLikeFromFilm(int filmId, int userId) {
 
-        // Делаю запрос на количество связей film_id и user_id.
-        // Если есть более 1 связи или их вообще 0,
-        // значит пользователь или не добавлял лайк этому фильму,
-        // или я где-то опростоволосился и лайков 2+
-        String sqlQueryForCheck = "SELECT COUNT(LIKE_ID) AS COUNT " +
-                "FROM LIKES " +
-                "WHERE FILM_ID = ? AND USER_ID = ? ";
-
         // Запрос на удаление лайка
         String sqlQueryForDelete = "DELETE " +
                 "FROM LIKES " +
                 "WHERE FILM_ID = ? AND USER_ID = ?";
 
-        // Исполняю запрос на проверку
-        SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(sqlQueryForCheck, filmId, userId);
-
-        // Перехожу на ряд с результатом
-        sqlRowSet.next();
-        // Если результат не равен 1, то количество лайков или больше 1,
-        // что значит, что где-то в добавлении ошибка, или результат равен 0,
-        // и тогда пользователь пытается убрать лайк фильму, хотя он его не ставил
-        if (sqlRowSet.getInt("COUNT") != 1) {
-            log.debug("Пользователь пытается убрать лайк фильму, которому не ставил лайк");
-            return getFilmById(filmId);
-        }
-
-        // Исполняю запрос на удаление
+        // Выполняю запрос на удаление
         jdbcTemplate.update(sqlQueryForDelete, filmId, userId);
 
         log.debug("Убран лайк с film с id {} поставленный пользователем с id {} ", filmId, userId);
 
         return getFilmById(filmId);
-    }
-
-    @Override
-    public Optional<Genre> getGenreById(int id) {
-        // Запрос на получение жанра по id
-        String sqlQuery = "SELECT GENRE_ID, NAME AS GNAME " +
-                "FROM GENRES " +
-                "WHERE GENRE_ID = ?";
-
-        Genre genre;
-
-        // Выполнение запроса
-        SqlRowSet userRows = jdbcTemplate.queryForRowSet(sqlQuery, id);
-
-        // Прохожусь по 1 строке результата запроса
-        if (userRows.next()) {
-
-            log.debug("Найден объект с id {}, и именем {}", userRows.getInt("GENRE_ID"), userRows.getString("GNAME"));
-
-            // Создаю объект жанра из запроса
-            genre = createGenre(userRows);
-            if (genre != null) {
-                return Optional.of(genre);
-            }
-            return Optional.empty();
-        }
-        return Optional.empty();
-    }
-
-    @Override
-    public Collection<Genre> getGenres() {
-
-        // Запрос на получение всех айдишников жанров фильмов
-        String sqlQuery = "SELECT GENRE_ID " +
-                "FROM GENRES  ";
-
-        Genre genre;
-        Collection<Genre> genres = new ArrayList<>();
-
-        // Выполнение запроса
-        SqlRowSet userRows = jdbcTemplate.queryForRowSet(sqlQuery);
-
-        // Прохожусь по всему результату запроса
-        while (userRows.next()) {
-            log.debug("Найден объект с id {} ", userRows.getInt("GENRE_ID"));
-
-            // Достаю айдишник из запроса
-            int genreId = userRows.getInt("GENRE_ID");
-            // Если по нему получается достать фильм, то я добавляю его в коллекцию фильмов
-            if (getGenreById(genreId).isPresent()) {
-                genre = getGenreById(genreId).get();
-                genres.add(genre);
-            }
-        }
-
-        return genres;
-    }
-
-    @Override
-    public Optional<Mpa> getMpaById(int id) {
-        // Запрос на получение MPA по id
-        String sqlQuery = "SELECT MPA_ID, NAME AS MNAME " +
-                "FROM MPA " +
-                "WHERE MPA_ID = ?";
-
-        Mpa mpa;
-
-        // Выполнение запроса
-        SqlRowSet userRows = jdbcTemplate.queryForRowSet(sqlQuery, id);
-
-        // Прохожусь по 1 строке результата запроса
-        if (userRows.next()) {
-
-            log.debug("Найден объект с id {}, и именем {}", userRows.getInt("MPA_ID"), userRows.getString("MNAME"));
-
-            // Создаю объект жанра из запроса
-            mpa = createMpa(userRows);
-
-            return Optional.of(mpa);
-        }
-        return Optional.empty();
-    }
-
-    @Override
-    public Collection<Mpa> getMpas() {
-
-        // Запрос на получение всех айдишников mpa фильмов
-        String sqlQuery = "SELECT MPA_ID " +
-                "FROM MPA  ";
-
-        Mpa mpa;
-        Collection<Mpa> mpas = new ArrayList<>();
-
-        // Выполнение запроса
-        SqlRowSet userRows = jdbcTemplate.queryForRowSet(sqlQuery);
-
-        // Прохожусь по всему результату запроса
-        while (userRows.next()) {
-            log.debug("Найден объект с id {} ", userRows.getInt("MPA_ID"));
-
-            // Достаю айдишник из запроса
-            int mpaId = userRows.getInt("MPA_ID");
-            // Если по нему получается достать фильм, то я добавляю его в коллекцию фильмов
-            if (getMpaById(mpaId).isPresent()) {
-                mpa = getMpaById(mpaId).get();
-                mpas.add(mpa);
-            }
-        }
-
-        return mpas;
     }
 
     private Like createLike(SqlRowSet userRows) {

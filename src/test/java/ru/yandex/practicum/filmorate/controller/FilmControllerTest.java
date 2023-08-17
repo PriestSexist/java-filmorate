@@ -11,6 +11,7 @@ import ru.yandex.practicum.filmorate.storage.film.dao.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.dao.UserDbStorage;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +32,7 @@ class FilmControllerTest {
         Mpa mpa = new Mpa(5, "NC-17");
         Genre genre = new Genre(6, "Боевик");
         Film filmForPost = new Film(10, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
-        HashSet<Genre> genres = new HashSet<>();
+        ArrayList<Genre> genres = new ArrayList<>();
 
         filmForPost.getGenres().add(genre);
         genres.add(genre);
@@ -56,7 +57,7 @@ class FilmControllerTest {
         Film filmForPost = new Film(1, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
         Film filmForPut = new Film(1, "Stas Live", "Stas B hates everyone even you.", LocalDate.of(1989, 10, 24), 120, mpa);
 
-        HashSet<Genre> genres = new HashSet<>();
+        ArrayList<Genre> genres = new ArrayList<>();
 
         filmForPost.getGenres().add(genre);
         filmForPut.getGenres().add(genre);
@@ -85,7 +86,7 @@ class FilmControllerTest {
         Film filmForPost1 = new Film(1, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
         Film filmForPost2 = new Film(2, "Stas Live", "Stas B hates everyone even you.", LocalDate.of(1989, 10, 24), 120, mpa);
 
-        HashSet<Genre> genres = new HashSet<>();
+        ArrayList<Genre> genres = new ArrayList<>();
 
         filmForPost1.getGenres().add(genre);
         filmForPost2.getGenres().add(genre);
@@ -126,7 +127,7 @@ class FilmControllerTest {
         Mpa mpa = new Mpa(5, "NC-17");
         Genre genre = new Genre(6, "Боевик");
         Film filmForPost = new Film(1, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
-        HashSet<Genre> genres = new HashSet<>();
+        ArrayList<Genre> genres = new ArrayList<>();
 
         filmForPost.getGenres().add(genre);
         genres.add(genre);
@@ -156,7 +157,7 @@ class FilmControllerTest {
         Genre genre = new Genre(6, "Боевик");
         Like like = new Like(1, 1, 1);
         Film filmForPost = new Film(1, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
-        HashSet<Genre> genres = new HashSet<>();
+        ArrayList<Genre> genres = new ArrayList<>();
         HashSet<Like> likes = new HashSet<>();
 
         filmForPost.getGenres().add(genre);
@@ -188,7 +189,7 @@ class FilmControllerTest {
         Mpa mpa = new Mpa(5, "NC-17");
         Genre genre = new Genre(6, "Боевик");
         Film filmForPost = new Film(1, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
-        HashSet<Genre> genres = new HashSet<>();
+        ArrayList<Genre> genres = new ArrayList<>();
         HashSet<Like> likes = new HashSet<>();
 
         filmForPost.getGenres().add(genre);
@@ -211,108 +212,4 @@ class FilmControllerTest {
                 .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("likes", likes));
 
     }
-
-    @Test
-    public void testGetGenreById() {
-        Optional<Genre> genreOptional = filmStorage.getGenreById(6);
-
-        assertThat(genreOptional)
-                .isPresent()
-                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("id", 6))
-                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("name", "Боевик"));
-
-    }
-
-    @Test
-    public void testGetAllGenres() {
-        List<Genre> genres = (List<Genre>) filmStorage.getGenres();
-
-        Optional<Genre> genre1FromBd = Optional.of(genres.get(0));
-        Optional<Genre> genre2FromBd = Optional.of(genres.get(1));
-        Optional<Genre> genre3FromBd = Optional.of(genres.get(2));
-        Optional<Genre> genre4FromBd = Optional.of(genres.get(3));
-        Optional<Genre> genre5FromBd = Optional.of(genres.get(4));
-        Optional<Genre> genre6FromBd = Optional.of(genres.get(5));
-
-        assertThat(genre1FromBd)
-                .isPresent()
-                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("id", 1))
-                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("name", "Комедия"));
-
-        assertThat(genre2FromBd)
-                .isPresent()
-                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("id", 2))
-                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("name", "Драма"));
-
-        assertThat(genre3FromBd)
-                .isPresent()
-                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("id", 3))
-                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("name", "Мультфильм"));
-
-        assertThat(genre4FromBd)
-                .isPresent()
-                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("id", 4))
-                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("name", "Триллер"));
-
-        assertThat(genre5FromBd)
-                .isPresent()
-                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("id", 5))
-                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("name", "Документальный"));
-
-        assertThat(genre6FromBd)
-                .isPresent()
-                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("id", 6))
-                .hasValueSatisfying(genre -> assertThat(genre).hasFieldOrPropertyWithValue("name", "Боевик"));
-
-    }
-
-    @Test
-    public void testGetMpaById() {
-        Optional<Mpa> mpaOptional = filmStorage.getMpaById(1);
-
-        assertThat(mpaOptional)
-                .isPresent()
-                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("id", 1))
-                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("name", "G"));
-
-    }
-
-    @Test
-    public void testGetAllMpas() {
-        List<Mpa> mpas = (List<Mpa>) filmStorage.getMpas();
-
-        Optional<Mpa> mpa1FromBd = Optional.of(mpas.get(0));
-        Optional<Mpa> mpa2FromBd = Optional.of(mpas.get(1));
-        Optional<Mpa> mpa3FromBd = Optional.of(mpas.get(2));
-        Optional<Mpa> mpa4FromBd = Optional.of(mpas.get(3));
-        Optional<Mpa> mpa5FromBd = Optional.of(mpas.get(4));
-
-        assertThat(mpa1FromBd)
-                .isPresent()
-                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("id", 1))
-                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("name", "G"));
-
-        assertThat(mpa2FromBd)
-                .isPresent()
-                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("id", 2))
-                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("name", "PG"));
-
-        assertThat(mpa3FromBd)
-                .isPresent()
-                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("id", 3))
-                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("name", "PG-13"));
-
-        assertThat(mpa4FromBd)
-                .isPresent()
-                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("id", 4))
-                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("name", "R"));
-
-        assertThat(mpa5FromBd)
-                .isPresent()
-                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("id", 5))
-                .hasValueSatisfying(mpa -> assertThat(mpa).hasFieldOrPropertyWithValue("name", "NC-17"));
-
-    }
-
-
 }

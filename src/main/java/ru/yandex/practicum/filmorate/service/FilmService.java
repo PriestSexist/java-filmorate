@@ -1,11 +1,9 @@
 package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.util.Collection;
@@ -17,7 +15,6 @@ import java.util.stream.Collectors;
 @Service
 public class FilmService {
 
-    @Qualifier("filmDbStorage")
     private final FilmStorage filmDbStorage;
 
     @Autowired
@@ -26,10 +23,20 @@ public class FilmService {
     }
 
     public Optional<Film> postFilm(Film film) {
+        if (film.getGenres() != null) {
+            List<Genre> uniqGenres = film.getGenres().stream().distinct().collect(Collectors.toList());
+            film.getGenres().clear();
+            film.getGenres().addAll(uniqGenres);
+        }
         return filmDbStorage.postFilm(film);
     }
 
     public Optional<Film> putFilm(Film film) {
+        if (film.getGenres() != null) {
+            List<Genre> uniqGenres = film.getGenres().stream().distinct().collect(Collectors.toList());
+            film.getGenres().clear();
+            film.getGenres().addAll(uniqGenres);
+        }
         return filmDbStorage.putFilm(film);
     }
 
@@ -57,19 +64,4 @@ public class FilmService {
                 .collect(Collectors.toList());
     }
 
-    public Optional<Genre> getGenreById(int id) {
-        return filmDbStorage.getGenreById(id);
-    }
-
-    public Collection<Genre> getGenres() {
-        return filmDbStorage.getGenres();
-    }
-
-    public Optional<Mpa> getMpaById(int id) {
-        return filmDbStorage.getMpaById(id);
-    }
-
-    public Collection<Mpa> getMpas() {
-        return filmDbStorage.getMpas();
-    }
 }

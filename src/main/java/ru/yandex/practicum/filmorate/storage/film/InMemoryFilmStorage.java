@@ -1,21 +1,17 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
-import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Like;
-import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Component("inMemoryFilmStorage")
 public class InMemoryFilmStorage implements FilmStorage {
 
-    private AtomicInteger counterForFilms = new AtomicInteger(0);
-    private AtomicInteger counterForLikes = new AtomicInteger(0);
+    private final AtomicInteger counterForFilms = new AtomicInteger(0);
+    private final AtomicInteger counterForLikes = new AtomicInteger(0);
     private final Collection<Film> films = new ArrayList<>();
 
     @Override
@@ -61,26 +57,6 @@ public class InMemoryFilmStorage implements FilmStorage {
             getFilmById(filmId).get().getLikes().remove(new Like(counterForLikes.incrementAndGet(), filmId, userId));
         }
         return getFilmById(filmId);
-    }
-
-    @Override
-    public Collection<Mpa> getMpas() {
-        return null;
-    }
-
-    @Override
-    public Optional<Genre> getGenreById(int id) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<Mpa> getMpaById(int id) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Collection<Genre> getGenres() {
-        return null;
     }
 
 }

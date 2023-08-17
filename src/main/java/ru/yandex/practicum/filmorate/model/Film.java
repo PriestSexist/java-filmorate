@@ -8,6 +8,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 
 @Data
@@ -15,7 +16,7 @@ import java.util.HashSet;
 @AllArgsConstructor
 public class Film {
     private int id;
-    @NotBlank(message = "Nameo can't be blank")
+    @NotBlank(message = "Name can't be blank")
     private String name;
     @Size(max = 200, message = "description should be 200 symbols or less")
     private String description;
@@ -23,7 +24,7 @@ public class Film {
     @Positive(message = "Duration can't be zero or negative")
     private int duration; // В минутах
     private Mpa mpa;
-    private final HashSet<Genre> genres = new HashSet<>();
+    private final ArrayList<Genre> genres = new ArrayList<>();
     private final HashSet<Like> likes = new HashSet<>();
 
 }

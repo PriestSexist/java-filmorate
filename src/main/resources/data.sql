@@ -1,14 +1,12 @@
-insert into MPA select * from ( select 1, 'G' union
-                                select 2, 'PG' union
-                                select 3, 'PG-13' union
-                                select 4, 'R' union
-                                select 5, 'NC-17'
-) x where not exists(select * from MPA);
+MERGE INTO MPA KEY (MPA_ID) VALUES (1, 'G');
+MERGE INTO MPA KEY (MPA_ID) VALUES (2, 'PG');
+MERGE INTO MPA KEY (MPA_ID) VALUES (3, 'PG-13');
+MERGE INTO MPA KEY (MPA_ID) VALUES (4, 'R');
+MERGE INTO MPA KEY (MPA_ID) VALUES (5, 'NC-17');
 
-insert into GENRES select * from ( select 1, 'Комедия' union
-                                   select 2, 'Драма' union
-                                   select 3, 'Мультфильм' union
-                                   select 4, 'Триллер' union
-                                   select 5, 'Документальный' union
-                                   select 6, 'Боевик'
-) x where not exists(select * from GENRES);
+MERGE INTO GENRES KEY (GENRE_ID) VALUES (1, 'Комедия');
+MERGE INTO GENRES KEY (GENRE_ID) VALUES (2, 'Драма');
+MERGE INTO GENRES KEY (GENRE_ID) VALUES (3, 'Мультфильм');
+MERGE INTO GENRES KEY (GENRE_ID) VALUES (4, 'Триллер');
+MERGE INTO GENRES KEY (GENRE_ID) VALUES (5, 'Документальный');
+MERGE INTO GENRES KEY (GENRE_ID) VALUES (6, 'Боевик');
