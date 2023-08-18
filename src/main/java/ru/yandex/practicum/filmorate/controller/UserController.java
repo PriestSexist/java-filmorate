@@ -42,13 +42,9 @@ public class UserController {
             throw new InvalidLoginException("Invalid login");
         }
 
-        Optional<User> optionalUser = userService.getUserById(user.getId());
-
-        if (optionalUser.isEmpty()) {
+        return userService.putUser(user).orElseThrow(() -> {
             throw new UserNotFoundException("User not found");
-        }
-
-        return userService.putUser(user).get();
+        });
     }
 
     @GetMapping()
@@ -58,48 +54,33 @@ public class UserController {
 
     @GetMapping("/{id}")
     public User getUserById(@PathVariable int id) {
-
-        Optional<User> optionalUser = userService.getUserById(id);
-
-        if (optionalUser.isEmpty()) {
+        return userService.getUserById(id).orElseThrow(() -> {
             throw new UserNotFoundException("User not found");
-        }
-
-        return userService.getUserById(id).get();
+        });
     }
 
     @PutMapping("/{id}/friends/{friendId}")
     public User putUserFriend(@PathVariable int id, @PathVariable int friendId) {
 
-        Optional<User> optionalUser = userService.getUserById(id);
-        Optional<User> optionalFriend = userService.getUserById(friendId);
-
-        if (optionalUser.isEmpty() || optionalFriend.isEmpty()) {
-            throw new UserNotFoundException("One of the users not found");
-        }
-
         if (id == friendId) {
             throw new EqualIdentifierException("Identifiers are equal");
         }
 
-        return userService.putUserFriend(id, friendId).get();
+        return userService.putUserFriend(id, friendId).orElseThrow(() -> {
+            throw new UserNotFoundException("One of the users not found");
+        });
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
     public User deleteUserFriend(@PathVariable int id, @PathVariable int friendId) {
 
-        Optional<User> optionalUser = userService.getUserById(id);
-        Optional<User> optionalFriend = userService.getUserById(friendId);
-
-        if (optionalUser.isEmpty() || optionalFriend.isEmpty()) {
-            throw new UserNotFoundException("One of the users not found");
-        }
-
         if (id == friendId) {
             throw new EqualIdentifierException("Identifiers are equal");
         }
 
-        return userService.deleteUserFriend(id, friendId).get();
+        return userService.deleteUserFriend(id, friendId).orElseThrow(() -> {
+            throw new UserNotFoundException("One of the users not found");
+        });
     }
 
     @GetMapping("/{id}/friends")

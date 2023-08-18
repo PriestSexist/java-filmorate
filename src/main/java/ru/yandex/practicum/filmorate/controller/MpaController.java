@@ -11,7 +11,6 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.service.MpaService;
 
 import java.util.Collection;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/mpa")
@@ -27,14 +26,9 @@ public class MpaController {
 
     @GetMapping("/{id}")
     public Mpa getMpaById(@PathVariable int id) {
-
-        Optional<Mpa> optionalMpa = mpaService.getMpaById(id);
-
-        if (optionalMpa.isEmpty()) {
+        return mpaService.getMpaById(id).orElseThrow(() -> {
             throw new MpaNotFoundException("Mpa not found");
-        }
-
-        return optionalMpa.get();
+        });
     }
 
     @GetMapping

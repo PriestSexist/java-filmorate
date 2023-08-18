@@ -57,7 +57,7 @@ public class FilmService {
     }
 
     public List<Film> getTopFilms(int count) {
-        Comparator<Film> comparator = Comparator.comparing(e -> e.getLikes().size());
+        Comparator<Film> comparator = Comparator.comparing(film -> film.getLikes().size());
         return getFilms().stream()
                 .sorted(comparator.reversed())
                 .limit(count)
