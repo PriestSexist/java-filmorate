@@ -1,44 +1,62 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
-import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Like;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Component
 public class InMemoryFilmStorage implements FilmStorage {
 
-    private AtomicInteger counter = new AtomicInteger(0);
-    private final HashMap<Integer, Film> films = new HashMap<>();
+    private final AtomicInteger counterForFilms = new AtomicInteger(0);
+    private final AtomicInteger counterForLikes = new AtomicInteger(0);
+    private final Collection<Film> films = new ArrayList<>();
 
     @Override
-    public Film postFilm(Film film) {
-        film.setId(counter.incrementAndGet());
-        films.put(film.getId(), film);
-        return film;
+    public Optional<Film> postFilm(Film film) {
+        film.setId(counterForFilms.incrementAndGet());
+        films.add(film);
+        return getFilmById(film.getId());
     }
 
     @Override
-    public Film putFilm(Film film) {
-        films.replace(film.getId(), film);
-        return film;
+    public Optional<Film> putFilm(Film film) {
+        Optional<Film> filmToRemove = getFilmById(film.getId());
+        if (filmToRemove.isEmpty()) {
+            return Optional.empty();
+        }
+
+        films.remove(filmToRemove.get());
+        films.add(film);
+        return getFilmById(film.getId());
     }
 
     @Override
-    public HashMap<Integer, Film> getFilms() {
+    public Collection<Film> getFilms() {
         return films;
     }
 
     @Override
-    public Film getFilmById(int id) {
-        return films.get(id);
+    public Optional<Film> getFilmById(int id) {
+        return films.stream().filter(f -> f.getId() == id).findFirst();
     }
 
     @Override
-    public void clear() {
-        films.clear();
-        counter = new AtomicInteger(0);
+    public Optional<Film> putLikeToFilm(int filmId, int userId) {
+        if (getFilmById(filmId).isPresent()) {
+            getFilmById(filmId).get().getLikes().add(new Like(counterForLikes.incrementAndGet(), filmId, userId));
+        }
+        return getFilmById(filmId);
+    }
+
+    @Override
+    public Optional<Film> deleteLikeFromFilm(int filmId, int userId) {
+        if (getFilmById(filmId).isPresent()) {
+            getFilmById(filmId).get().getLikes().remove(new Like(counterForLikes.incrementAndGet(), filmId, userId));
+        }
+        return getFilmById(filmId);
     }
 
 }

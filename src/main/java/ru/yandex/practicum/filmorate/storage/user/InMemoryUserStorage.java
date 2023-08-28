@@ -1,43 +1,94 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
-import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.model.FriendShip;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Component
 public class InMemoryUserStorage implements UserStorage {
 
-    private AtomicInteger counter = new AtomicInteger(0);
-    private final HashMap<Integer, User> users = new HashMap<>();
+    private final AtomicInteger counter = new AtomicInteger(0);
+    private final Collection<User> users = new ArrayList<>();
 
     @Override
-    public User postUser(User user) {
+    public Optional<User> postUser(User user) {
         user.setId(counter.incrementAndGet());
-        users.put(user.getId(), user);
-        return user;
+        users.add(user);
+        return getUserById(user.getId());
     }
 
     @Override
-    public User putUser(User user) {
-        users.replace(user.getId(), user);
-        return user;
+    public Optional<User> putUser(User user) {
+        Optional<User> userToRemove = getUserById(user.getId());
+        if (userToRemove.isEmpty()) {
+            return Optional.empty();
+        }
+
+        users.remove(userToRemove.get());
+        users.add(user);
+        return getUserById(user.getId());
     }
 
     @Override
-    public HashMap<Integer, User> getUsers() {
+    public Collection<User> getUsers() {
         return users;
     }
 
     @Override
-    public User getUserById(int id) {
-        return users.get(id);
+    public Optional<User> getUserById(int id) {
+        return users.stream().filter(u -> u.getId() == id).findFirst();
     }
 
     @Override
-    public void clear() {
-        users.clear();
-        counter = new AtomicInteger(0);
+    public Optional<User> putUserFriend(int userId, int friendId) {
+
+        User user = getUserById(friendId).get();
+        user.getFriendShips().add(new FriendShip(userId, friendId));
+
+        return getUserById(userId);
+
     }
+
+    @Override
+    public Optional<User> deleteUserFriend(int userId, int friendId) {
+
+        User user = getUserById(friendId).get();
+        user.getFriendShips().remove(new FriendShip(userId, friendId));
+
+        return getUserById(userId);
+    }
+
+    @Override
+    public Collection<User> getFriends(int userId) {
+        Collection<User> friends = new HashSet<>();
+
+        if (getUserById(userId).isEmpty()) {
+            return friends;
+        }
+
+        User user = getUserById(userId).get();
+        for (FriendShip friendship : user.getFriendShips()) {
+            if (getUserById(friendship.getFriendId()).isEmpty()) {
+                continue;
+            }
+            User friend = getUserById(friendship.getFriendId()).get();
+            friends.add(friend);
+        }
+        return friends;
+    }
+
+    @Override
+    public Collection<User> getCommonFriends(int userId, int otherId) {
+        Collection<User> myFriends = new HashSet<>(getFriends(userId));
+        Collection<User> otherFriends = new HashSet<>(getFriends(otherId));
+
+        myFriends.retainAll(otherFriends);
+
+        return myFriends;
+    }
+
 }
