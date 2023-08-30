@@ -212,4 +212,39 @@ class FilmControllerTest {
                 .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("likes", likes));
 
     }
+
+    @Test
+    void testGetCommonFilms() {
+        User user = new User(1, "vitekb650@gmaill.com", "PriestSexist", "Viktor", LocalDate.of(2002, 10, 22));
+        User friend = new User(2, "satori@gmaill.com", "Satori", "Stas", LocalDate.of(1989, 10, 24));
+
+        userStorage.postUser(user);
+        userStorage.postUser(friend);
+
+        Mpa mpa = new Mpa(5, "NC-17");
+        Genre genre = new Genre(6, "Боевик");
+        Film filmForPost = new Film(1, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
+        ArrayList<Genre> genres = new ArrayList<>();
+
+        filmForPost.getGenres().add(genre);
+        genres.add(genre);
+
+        filmStorage.postFilm(filmForPost);
+        filmStorage.putLikeToFilm(filmForPost.getId(), user.getId());
+        filmStorage.putLikeToFilm(filmForPost.getId(), friend.getId());
+
+        HashSet<Film> films = (HashSet<Film>) filmStorage.getCommonFilms(user.getId(), friend.getId());
+
+        Optional<Film> filmOptional = films.stream().findFirst();
+
+        assertThat(filmOptional)
+                .isPresent()
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("id", 1))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("name", "Viktor B Live"))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("description", "Viktor B hates everyone even you."))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("releaseDate", LocalDate.of(2002, 10, 22)))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("duration", 60))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("mpa", mpa))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("genres", genres));
+    }
 }
