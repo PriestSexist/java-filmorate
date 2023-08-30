@@ -64,4 +64,11 @@ public class FilmService {
                 .collect(Collectors.toList());
     }
 
+    public Collection<Film> getCommonFilms(int userId, int friendId) {
+        Comparator<Film> comparator = Comparator.comparing(film -> film.getLikes().size());
+        return filmDbStorage.getCommonFilms(userId, friendId).stream()
+                .sorted(comparator.reversed())
+                .collect(Collectors.toList());
+    }
+
 }
