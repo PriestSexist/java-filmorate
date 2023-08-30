@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.DirectorService;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -24,7 +26,7 @@ public class DirectorController {
         // TODO ?sortBy=[year,likes]
         // GET /films/director/{directorId}?sortBy=[year,likes]
 
-        log.info("Вызван GET запрос для получения списка фильмов режиссера.");
+        log.info("Вызван GET запрос для получения списка фильмов по режиссеру.");
         log.debug("Передан идентификатор режисера {},", directorId);
 
         return directorService.getFilmByDirectorId(directorId);
@@ -44,7 +46,7 @@ public class DirectorController {
 
     @ResponseBody
     @GetMapping("/directors")
-    public List<Film> findAll() {
+    public List<Director> findAll() {
         // GET /directors
 
         log.info("Вызван GET запрос на получение списка всех режисеров.");
@@ -65,7 +67,7 @@ public class DirectorController {
 
     @ResponseBody
     @PostMapping(value = "/directors")
-    public Film addDirector(@Valid @RequestBody Director director) {
+    public Director addDirector(@Valid @RequestBody Director director) {
         // POST /directors
 
         log.info("Вызван POST запрос на добавление нового режисера.");
