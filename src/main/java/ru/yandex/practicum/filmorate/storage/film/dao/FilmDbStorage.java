@@ -107,7 +107,7 @@ public class FilmDbStorage implements FilmStorage {
         }
 
         // Я решил убрать тут лишнюю проверку, так как если бы фильма не было в бд,
-        // то тогда бы countOfUpdatedRows было равно 0 и вернулся бы Optional.empty()
+        // То тогда бы countOfUpdatedRows было равно 0 и вернулся бы Optional.empty()
         // Фильм из бд
         Film filmInDb = getFilmById(filmId).get();
 
