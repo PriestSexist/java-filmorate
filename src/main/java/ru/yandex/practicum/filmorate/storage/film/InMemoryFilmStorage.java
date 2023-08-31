@@ -3,8 +3,10 @@ package ru.yandex.practicum.filmorate.storage.film;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Like;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -57,6 +59,18 @@ public class InMemoryFilmStorage implements FilmStorage {
             getFilmById(filmId).get().getLikes().remove(new Like(counterForLikes.incrementAndGet(), filmId, userId));
         }
         return getFilmById(filmId);
+    }
+
+    @Override
+    public List<Film> getPopularByGenreByYear (int count, int genreId, int year){
+        return null;
+    }
+
+    public List<Film> getPopularByYear (int count, int year){
+        return null;
+    }
+    public List<Film> getPopularByGenre (int count, int genreId){
+        return null;
     }
 
 }

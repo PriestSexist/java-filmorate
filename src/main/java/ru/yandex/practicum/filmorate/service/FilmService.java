@@ -6,10 +6,8 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,12 +54,38 @@ public class FilmService {
         return filmDbStorage.deleteLikeFromFilm(filmId, userId);
     }
 
-    public List<Film> getTopFilms(int count) {
-        Comparator<Film> comparator = Comparator.comparing(film -> film.getLikes().size());
-        return getFilms().stream()
-                .sorted(comparator.reversed())
-                .limit(count)
-                .collect(Collectors.toList());
+
+    public List<Film> getTopFilms(Map<String,String>allParams) {
+        List<Film> topFilms = new ArrayList<>();
+        int count;
+        if (allParams.containsKey("count")){
+            count = Integer.parseInt(allParams.get("count"));
+        }else {
+            count = 1;
+        }
+        if (!allParams.containsKey("year") && !allParams.containsKey("genreId")) {
+            Comparator<Film> comparator = Comparator.comparing(film -> film.getLikes().size());
+            topFilms = getFilms().stream()
+                    .sorted(comparator.reversed())
+                    .limit(count)
+                    .collect(Collectors.toList());
+        }
+        else if (allParams.containsKey("genreId") && allParams.containsKey("year")){
+            int genreId = Integer.parseInt(allParams.get("genreId"));
+            int year = Integer.parseInt(allParams.get("year"));
+            topFilms = filmDbStorage.getPopularByGenreByYear(count, genreId, year);
+        }
+        else if (allParams.containsKey("genreId")){
+            int genreId = Integer.parseInt(allParams.get("genreId"));
+
+            topFilms = filmDbStorage.getPopularByGenre(count, genreId);
+        }
+        else if (allParams.containsKey("year")){
+            int year = Integer.parseInt(allParams.get("year"));
+            topFilms = filmDbStorage.getPopularByYear(count, year);
+        }
+        return topFilms;
     }
+
 
 }

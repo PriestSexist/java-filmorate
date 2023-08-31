@@ -212,4 +212,68 @@ class FilmControllerTest {
                 .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("likes", likes));
 
     }
+
+    @Test
+    public void testGetTopFilms() {
+        Film film1 = Film.builder()
+                .id(1)
+                .name("movie1")
+                .description("movie1")
+                .releaseDate(LocalDate.of(2001, 01, 01))
+                .duration(121)
+                .mpa(new Mpa(5, "NC-17"))
+                .build();
+        film1.getGenres().add(new Genre(6, "Боевик"));
+        filmStorage.postFilm(film1);
+        filmStorage.putLikeToFilm(1, 1);
+
+        Film film2 = Film.builder()
+                .id(2)
+                .name("movie2")
+                .description("movie2")
+                .releaseDate(LocalDate.of(2002, 02, 02))
+                .duration(122)
+                .mpa(new Mpa(3, "PG-13"))
+                .build();
+        film2.getGenres().add(new Genre(1, "Комедия"));
+        filmStorage.postFilm(film2);
+
+        Film film3 = Film.builder()
+                .id(3)
+                .name("movie3")
+                .description("movie3")
+                .releaseDate(LocalDate.of(2003, 03, 03))
+                .duration(123)
+                .mpa(new Mpa(1, "G"))
+                .build();
+        film3.getGenres().add(new Genre(6, "Боевик"));
+        filmStorage.postFilm(film3);
+
+        User user = User.builder()
+                .id(1)
+                .email("one@yandex.ru")
+                .login("one")
+                .name("One")
+                .birthday(LocalDate.of(2001, 01, 01))
+                .build();
+        userStorage.postUser(user);
+
+        List<Film> topFilmsByGenreByYear = filmStorage.getPopularByGenreByYear(3, 6, 2003);
+        assertThat(topFilmsByGenreByYear)
+                .isNotEmpty()
+                .hasSize(1)
+                .containsExactly(filmStorage.getFilmById(film3.getId()).get());
+
+        List<Film> topFilmsByGenre = filmStorage.getPopularByGenre(3, 6);
+        assertThat(topFilmsByGenre)
+                .isNotEmpty()
+                .hasSize(2);
+
+        List<Film> topFilmsByYear = filmStorage.getPopularByYear(3, 2001);
+        assertThat(topFilmsByYear)
+                .isNotEmpty()
+                .hasSize(1)
+                .containsExactly(filmStorage.getFilmById(film1.getId()).get());
+
+    }
 }
