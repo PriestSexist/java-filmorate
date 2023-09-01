@@ -53,7 +53,7 @@ public class ReviewDbStorage implements ReviewStorage {
         int reviewId = review.getReviewId();
 
         String sql = "UPDATE reviews SET content = ?, is_positive = ? WHERE review_id = ?"; //userId & filmId final поля, не меняем
-        log.debug("Updating review {}", review );
+        log.debug("Updating review {}", review);
 
         checkRowsUpdated(jdbcTemplate.update(sql, review.getContent(), review.getIsPositive(), reviewId));
         return getReviewById(reviewId);
