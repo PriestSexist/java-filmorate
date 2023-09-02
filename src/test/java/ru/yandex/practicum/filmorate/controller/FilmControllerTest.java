@@ -7,6 +7,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.storage.film.dao.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.dao.UserDbStorage;
 
@@ -25,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FilmControllerTest {
 
     private final FilmDbStorage filmStorage;
+    private final FilmService filmService;
     private final UserDbStorage userStorage;
 
     @Test
@@ -233,7 +235,7 @@ class FilmControllerTest {
         filmStorage.putLikeToFilm(filmForPost.getId(), user.getId());
         filmStorage.putLikeToFilm(filmForPost.getId(), friend.getId());
 
-        HashSet<Film> films = (HashSet<Film>) filmStorage.getCommonFilms(user.getId(), friend.getId());
+        List<Film> films = (List<Film>) filmService.getCommonFilms(user.getId(), friend.getId());
 
         Optional<Film> filmOptional = films.stream().findFirst();
 

@@ -65,10 +65,21 @@ public class FilmService {
     }
 
     public Collection<Film> getCommonFilms(int userId, int friendId) {
+
         Comparator<Film> comparator = Comparator.comparing(film -> film.getLikes().size());
-        return filmDbStorage.getCommonFilms(userId, friendId).stream()
+        List<Film> films = filmDbStorage.getCommonFilms(userId, friendId).stream()
                 .sorted(comparator.reversed())
                 .collect(Collectors.toList());
+
+        for (Film film : films) {
+            if (film.getGenres() != null) {
+                List<Genre> uniqGenres = film.getGenres().stream().distinct().collect(Collectors.toList());
+                film.getGenres().clear();
+                film.getGenres().addAll(uniqGenres);
+            }
+        }
+
+        return films;
     }
 
 }
