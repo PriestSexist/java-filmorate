@@ -168,7 +168,7 @@ public class FilmDbStorage implements FilmStorage {
                 "FROM FILMS AS F " +
                 "LEFT JOIN LIKES AS L on F.FILM_ID = L.FILM_ID " +
                 "LEFT JOIN MPA AS M on F.MPA_ID = M.MPA_ID " +
-                "LEFT JOIN FILM_GENRE_CONNECTION AS FGC on F.FILM_ID = fgc.FILM_ID " +
+                "LEFT JOIN FILM_GENRE_CONNECTION AS FGC on F.FILM_ID = FGC.FILM_ID " +
                 "LEFT JOIN GENRES AS G on FGC.GENRE_ID = G.GENRE_ID ";
 
         Film film;
