@@ -371,4 +371,15 @@ public class FilmDbStorage implements FilmStorage {
                 sqlRowSet.getString("MNAME"));
     }
 
+    @Override
+    public List<Integer> getFilmsIdByDirectorId(int directorId) {
+        String sqlQuery = "select film_id from film_directors where director_id = ? order by film_id";
+        return jdbcTemplate.queryForList(sqlQuery, Integer.class, directorId);
+    }
+
+    @Override
+    public List<Integer> getDirectorsIdByFilmId(int filmId) {
+        String sqlQuery = "select director_id from film_directors where film_id = ? order by director_id";
+        return jdbcTemplate.queryForList(sqlQuery, Integer.class, filmId);
+    }
 }

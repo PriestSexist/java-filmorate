@@ -21,32 +21,8 @@ public class DirectorController {
     private final DirectorService directorService;
 
     @ResponseBody
-    @GetMapping("/films/director/{directorId}")
-    public List<Film> getFilmByDirectorId(@PathVariable int directorId) {
-        // TODO ?sortBy=[year,likes]
-        // GET /films/director/{directorId}?sortBy=[year,likes]
-
-        log.info("Вызван GET запрос для получения списка фильмов по режиссеру.");
-        log.debug("Передан идентификатор режисера {},", directorId);
-
-        return directorService.getFilmByDirectorId(directorId);
-    }
-
-    @ResponseBody
-    @PostMapping(value = "/films")
-    public Film addFilm(@Valid @RequestBody Film film) {
-        // POST /films
-
-        log.info("Вызван POST запрос на добавление нового фильма.");
-        log.debug("Новый фильм с названием {}, идентификатор режисера {}",
-                film.getName(), film.getDirectorId());
-
-        return directorService.createNewFilm(film);
-    }
-
-    @ResponseBody
     @GetMapping("/directors")
-    public List<Director> findAll() {
+    public List<Director> getDirectors() {
         // GET /directors
 
         log.info("Вызван GET запрос на получение списка всех режисеров.");
@@ -56,13 +32,13 @@ public class DirectorController {
 
     @ResponseBody
     @GetMapping("/directors/{id}")
-    public Director getDirectorById(@PathVariable int id) {
+    public Director getDirector(@PathVariable int id) {
         // GET /directors/{id}
 
         log.info("Вызван GET запрос для получения режисера по идентификатору.");
         log.debug("Передан идентификатор режисера {},", id);
 
-        return directorService.getDirectorById(id);
+        return directorService.getDirector(id);
     }
 
     @ResponseBody
@@ -88,12 +64,12 @@ public class DirectorController {
     }
 
     @DeleteMapping("/directors/{id}")
-    public void removeDirectorById(@PathVariable int id) {
+    public void deleteDirector(@PathVariable int id) {
         // DELETE /directors/{id}
 
         log.debug("Вызван DELETE запрос на удаление режисера по идентификатору.");
         log.debug("Идентификатор режисера {}", id);
 
-        directorService.removeDirector(id);
+        directorService.deleteDirector(id);
     }
 }

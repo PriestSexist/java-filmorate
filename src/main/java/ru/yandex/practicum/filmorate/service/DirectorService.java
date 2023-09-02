@@ -19,24 +19,6 @@ public class DirectorService {
 
 
     /**
-     * Метод получения фильмов по режисеру
-     * @param directorId - идентификатор режисера
-     * @return список фильмов
-     */
-    public List<Film> getFilmByDirectorId(int directorId) {
-        //
-    }
-
-    /**
-     * Метод создания нового фильма с режисером
-     * @param film - создаваемый фильм
-     * @return сохраненный фильм
-     */
-    public Film createNewFilm(Film film) {
-        //
-    }
-
-    /**
      * Метод получения всех режисеров
      * @return список режисеров
      */

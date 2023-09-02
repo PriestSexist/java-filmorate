@@ -10,6 +10,7 @@ import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 @Data
 @Builder
@@ -26,5 +27,5 @@ public class Film {
     private Mpa mpa;
     private final ArrayList<Genre> genres = new ArrayList<>();
     private final HashSet<Like> likes = new HashSet<>();
-
+    private List<Director> directors;
 }
