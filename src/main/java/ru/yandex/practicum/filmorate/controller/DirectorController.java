@@ -43,7 +43,7 @@ public class DirectorController {
 
     @ResponseBody
     @PostMapping(value = "/directors")
-    public Director addDirector(@Valid @RequestBody Director director) {
+    public Director createDirector(@Valid @RequestBody Director director) {
         // POST /directors
 
         log.info("Вызван POST запрос на добавление нового режисера.");
@@ -70,6 +70,6 @@ public class DirectorController {
         log.debug("Вызван DELETE запрос на удаление режисера по идентификатору.");
         log.debug("Идентификатор режисера {}", id);
 
-        directorService.deleteDirector(id);
+        directorService.removeDirector(id);
     }
 }

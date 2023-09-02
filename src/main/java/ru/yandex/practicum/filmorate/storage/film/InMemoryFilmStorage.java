@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Like;
 
@@ -68,5 +69,25 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public List<Integer> getDirectorsIdByFilmId(int filmId) {
         return null;
+    }
+
+    @Override
+    public void deleteFilmDirectors(int filmId) {
+
+    }
+
+    @Override
+    public void addDirectorToFilm(Integer filmId, Integer directorId) {
+
+    }
+
+    @Override
+    public void setFilmDirectors(List<Director> directorsId, int filmId) {
+
+    }
+
+    @Override
+    public void updateFilmDirectors(List<Director> directorsId, int filmId) {
+
     }
 }

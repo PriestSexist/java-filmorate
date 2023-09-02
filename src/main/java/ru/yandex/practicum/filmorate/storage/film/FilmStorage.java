@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.Collection;
@@ -22,4 +23,12 @@ public interface FilmStorage {
     List<Integer> getFilmsIdByDirectorId(int id);
 
     List<Integer> getDirectorsIdByFilmId(int filmId);
+
+    void deleteFilmDirectors(int filmId);
+
+    void addDirectorToFilm(Integer filmId, Integer directorId);
+
+    void setFilmDirectors(List<Director> directorsId, int filmId);
+
+    void updateFilmDirectors(List<Director> directorsId, int filmId);
 }

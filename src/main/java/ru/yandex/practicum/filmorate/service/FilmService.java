@@ -66,7 +66,7 @@ public class FilmService {
         if (o_film.isPresent()) {
             Film film = o_film.get();
             List<Director> directors = filmDbStorage.getDirectorsIdByFilmId(film.getId()).stream()
-                    .map(directorStorage::getDirectorById)
+                    .map(directorStorage::getDirector)
                     .collect(Collectors.toList());
             film.setDirectors(directors);
             return film;
@@ -87,7 +87,7 @@ public class FilmService {
             for (Film film: films) {
                 List<Director> directors = filmDbStorage.getDirectorsIdByFilmId(film.getId())
                         .stream()
-                        .map(directorStorage::getDirectorById)
+                        .map(directorStorage::getDirector)
                         .collect(Collectors.toList());
                 film.setDirectors(directors);
             }

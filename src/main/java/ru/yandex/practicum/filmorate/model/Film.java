@@ -25,7 +25,7 @@ public class Film {
     @Positive(message = "Duration can't be zero or negative")
     private int duration; // В минутах
     private Mpa mpa;
+    private List<Director> directors;
     private final ArrayList<Genre> genres = new ArrayList<>();
     private final HashSet<Like> likes = new HashSet<>();
-    private List<Director> directors;
 }

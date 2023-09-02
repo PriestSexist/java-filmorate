@@ -13,6 +13,13 @@ public interface DirectorStorage {
     List<Director> getDirectors();
 
     /**
+     * Метод для получения всех режисеров
+     * @param id - идентификатор режисера
+     * @return - сущность режисера
+     */
+    Director getDirector(int id);
+
+    /**
      * Метод для создания нового режисера
      * @param director - сущность нового режисера
      * @return сущность созданного режисера с уникальным идентификатором
@@ -37,25 +44,4 @@ public interface DirectorStorage {
      * @param id - уникальный идентификатор режисера
      */
     boolean isDirectorPresent(Integer id);
-
-    /**
-     * Метод для получения режисера по уникальному идентификатору
-     * @param id - уникальный идентификатор режисера
-     * @return сущность режисера
-     */
-    Director getDirectorById(Integer id);
-
-    /**
-     * Метод для создания фильма с указанием режисера
-     * @param film - сущьность добавляемого фильма
-     * @return сущность сохраненного фильма
-     */
-    Film createNewFilm(Film film);
-
-    /**
-     * Метод получения фильмов по режисеру
-     * @param directorId - идентификатор режисера
-     * @return список фильмов
-     */
-    List<Film> getFilmByDirectorId(int directorId);
 }
