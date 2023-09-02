@@ -340,72 +340,14 @@ public class FilmDbStorage implements FilmStorage {
         return Optional.empty();
     }
 
-    @Override
-    public Collection<Film> getCommonFilms(int userId, int friendId) {
-        Collection<Film> myFilms = new HashSet<>(getFilmsLikedByUser(userId));
-        Collection<Film> friendFilms = new HashSet<>(getFilmsLikedByUser(friendId));
-
-        // retainAll удаляет все неодинаковые элементы
-        myFilms.retainAll(friendFilms);
-
-        return myFilms;
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        return getFilms().stream()
+                .filter(film -> containsId(film.getLikes(), userId) && containsId(film.getLikes(), friendId))
+                .collect(Collectors.toList());
     }
 
-    private Collection<Film> getFilmsLikedByUser(int userId) {
-        // Запрос на получение всех фильмов
-        String sqlQueryForGettingFilms = "SELECT F.FILM_ID, F.NAME, F.RELEASE_DATE, F.DURATION, F.DESCRIPTION, M.MPA_ID, M.NAME AS MNAME, L.USER_ID, G.GENRE_ID, G.NAME AS GNAME " +
-                "FROM FILMS AS F " +
-                "LEFT JOIN LIKES AS L on F.FILM_ID = L.FILM_ID " +
-                "LEFT JOIN MPA AS M on F.MPA_ID = M.MPA_ID " +
-                "LEFT JOIN FILM_GENRE_CONNECTION AS FGC on F.FILM_ID = fgc.FILM_ID " +
-                "LEFT JOIN GENRES AS G on FGC.GENRE_ID = G.GENRE_ID " +
-                "WHERE L.USER_ID = ?";
-
-        Film film;
-        Genre genre;
-        // Мапа айди фильма, сам фильм
-        HashMap<Integer, Film> films = new HashMap<>();
-
-        // Выполнение запроса
-        SqlRowSet filmsFromDb = jdbcTemplate.queryForRowSet(sqlQueryForGettingFilms, userId);
-
-        // Прохожусь по всем строкам
-        while (filmsFromDb.next()) {
-
-            // Если ключ содержится в мапе фильмов
-            if (films.containsKey(filmsFromDb.getInt("FILM_ID"))) {
-
-                //Достаю фильм из мапы
-                film = films.get(filmsFromDb.getInt("FILM_ID"));
-
-                // Отдельно создаю объект для Genre и добавляю его в объект фильма
-                genre = createGenre(filmsFromDb);
-
-
-                // Если жанр нашёлся и создался нормально, то я добавляю его фильму
-                if (genre != null) {
-                    film.getGenres().add(genre);
-                }
-
-                // Если ключа нет в мапе
-            } else {
-
-                // Создаю объект фильма из запроса
-                film = createFilm(filmsFromDb);
-
-                // Отдельно создаю объекты для Genre
-                genre = createGenre(filmsFromDb);
-
-                // Если жанр нашёлся и создался нормально, то я добавляю его фильму
-                if (genre != null) {
-                    film.getGenres().add(genre);
-                }
-
-                films.put(film.getId(), film);
-
-            }
-        }
-        return films.values();
+    private boolean containsId(final Set<Like> set, final int userId) {
+        return set.stream().anyMatch(o -> o.getUserId() == userId);
     }
 
     private Like createLike(SqlRowSet sqlRowSet) {
