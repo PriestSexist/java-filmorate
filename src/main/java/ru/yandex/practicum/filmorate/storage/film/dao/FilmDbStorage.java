@@ -12,7 +12,11 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Like;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,9 +27,10 @@ public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert simpleJdbcInsertForFilms;
     private final SimpleJdbcInsert simpleJdbcInsertForLikes;
+    private final MpaStorage mpaStorage; // добавлен в ветке add-most-popular
 
     @Autowired
-    public FilmDbStorage(JdbcTemplate jdbcTemplate) {
+    public FilmDbStorage(JdbcTemplate jdbcTemplate, MpaStorage mpaStorage) {
         this.jdbcTemplate = jdbcTemplate;
         this.simpleJdbcInsertForFilms = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("FILMS")
@@ -33,6 +38,7 @@ public class FilmDbStorage implements FilmStorage {
         this.simpleJdbcInsertForLikes = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("LIKES")
                 .usingGeneratedKeyColumns("LIKE_ID");
+        this.mpaStorage = mpaStorage; // добавлен в ветке add-most-popular
     }
 
     @Override
@@ -339,6 +345,84 @@ public class FilmDbStorage implements FilmStorage {
         log.debug("У film с id {} не было лайка поставленного пользователем с id {} ", filmId, userId);
         return Optional.empty();
     }
+
+
+    @Override
+    public List<Film> searchByTitle(String query) {
+        String sqlQuery = "SELECT * FROM films " +
+                "LEFT JOIN likes ON films.film_id = likes.film_id " +
+                "WHERE LOWER(films.name) LIKE LOWER(?) " +
+                "GROUP BY films.film_id ORDER BY COUNT(likes.user_id) DESC ";
+        String searchQuery = "%" + query + "%";
+        return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs), searchQuery);
+    }
+
+    @Override
+    public List<Film> searchByDirector(String query) {
+        String sqlQuery = "SELECT * FROM films " +
+                "LEFT JOIN likes ON films.film_id = likes.film_id " +
+                //добавить Таблицу DIRECTOR
+                "WHERE LOWER(directors.name) LIKE LOWER(?) " +   // проверить поле директор
+                "GROUP BY films.film_id ORDER BY COUNT(likes.user_id) DESC ";
+        String searchQuery = "%" + query + "%";
+        return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs), searchQuery);
+    }
+
+    @Override
+    public List<Film> searchByTitleByDirector(String query) {
+        String sqlQuery = "SELECT * FROM films " +
+                "LEFT JOIN likes ON films.film_id = likes.film_id " +
+                //добавить Таблицу DIRECTOR
+                "WHERE LOWER(films.name) LIKE LOWER(?) OR LOWER(directors.name) LIKE LOWER(?)" +  // проверить поле директор
+                "GROUP BY films.film_id ORDER BY COUNT(likes.user_id) DESC ";
+        String searchQuery = "%" + query + "%";
+        return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs), searchQuery);
+    }
+
+
+    // --- начало блока (формирование film) --- данный блок есть в ветке add-most-popular ---
+    private Film makeFilm(ResultSet rs) throws SQLException {
+        int id = rs.getInt("film_id");
+        String name = rs.getString("name");
+        String description = rs.getString("description");
+        LocalDate releaseDate = rs.getDate("release_date").toLocalDate();
+        int duration = rs.getInt("duration");
+        int mpaId = rs.getInt("mpa_id");
+        Mpa mpa = mpaStorage.getMpaById(mpaId).get();
+        ArrayList<Genre> genres = getFilmGenreByFilmId(id);
+        HashSet<Like> likes = getLikes(id);
+        Film film = Film.builder().name(name).description(description).releaseDate(releaseDate).duration(duration)
+                .mpa(mpa).build();
+        film.getGenres().addAll(genres);
+        film.getLikes().addAll(likes);
+        film.setId(id);
+        return film;
+    }
+
+    public ArrayList<Genre> getFilmGenreByFilmId(int filmId) {
+        SqlRowSet genresRows = jdbcTemplate.queryForRowSet("select * from genres where genre_id in " +
+                "(select genre_id from FILM_GENRE_CONNECTION where film_id = ?) order by genre_id asc ", filmId);
+        ArrayList<Genre> filmGenres = new ArrayList<>();
+        while (genresRows.next()) {
+            Genre genreFilm = new Genre(genresRows.getInt("genre_id"),
+                    genresRows.getString("name"));
+            filmGenres.add(genreFilm);
+        }
+        return filmGenres;
+    }
+
+    public HashSet<Like> getLikes(int filmId) {
+        String sqlQuery = "SELECT * FROM likes WHERE film_id = ?";
+        SqlRowSet likesRows = jdbcTemplate.queryForRowSet(sqlQuery, filmId);
+        HashSet<Like> likes = new HashSet<>();
+        while (likesRows.next()) {
+            Like like = createLike(likesRows);
+            likes.add(like);
+        }
+        return likes;
+    }
+// --- конец блока --- данный блок есть в ветке add-most-popular ---
+
 
     private Like createLike(SqlRowSet sqlRowSet) {
         if (sqlRowSet.getInt("LIKE_ID") != 0) {

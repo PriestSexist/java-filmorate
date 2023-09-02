@@ -6,11 +6,9 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
+
 
 @Service
 public class FilmService {
@@ -62,6 +60,18 @@ public class FilmService {
                 .sorted(comparator.reversed())
                 .limit(count)
                 .collect(Collectors.toList());
+    }
+
+    public List<Film> searchByTitleByDirector(String query, List<String> by) {
+        List<Film> searchFimls = new ArrayList<>();
+        if (by.contains("title") && by.contains("director")) {
+            searchFimls = filmDbStorage.searchByTitleByDirector(query);
+        } else if (by.contains("title")) {
+            searchFimls = filmDbStorage.searchByTitle(query);
+        } else if (by.contains("director")) {
+            searchFimls = filmDbStorage.searchByDirector(query);
+        }
+        return searchFimls;
     }
 
 }
