@@ -186,7 +186,7 @@ public class FilmDbStorage implements FilmStorage {
             // Если ключ содержится в мапе фильмов
             if (films.containsKey(filmsFromDb.getInt("FILM_ID"))) {
 
-                //Достаю фильм из мапы
+                // Достаю фильм из мапы
                 film = films.get(filmsFromDb.getInt("FILM_ID"));
 
                 // Отдельно создаю объекты для like и Genres и добавляю их в объект фильма
