@@ -27,7 +27,7 @@ public class FilmController {
         this.filmService = filmService;
     }
 
-    @PostMapping("/films")
+    @PostMapping()
     public Film postFilm(@Valid @RequestBody Film film) {
 
         if (!film.getReleaseDate().isAfter(BIRTH_OF_CINEMA) && !film.getReleaseDate().equals(BIRTH_OF_CINEMA)) {
@@ -37,7 +37,7 @@ public class FilmController {
         return filmService.postFilm(film).get();
     }
 
-    @PutMapping("/films")
+    @PutMapping()
     public Film putFilm(@Valid @RequestBody Film film) {
 
         if (!film.getReleaseDate().isAfter(BIRTH_OF_CINEMA) && !film.getReleaseDate().equals(BIRTH_OF_CINEMA)) {
@@ -81,7 +81,7 @@ public class FilmController {
     }
 
     @ResponseBody
-    @GetMapping("/films/director/{directorId}")
+    @GetMapping("/director/{directorId}")
     public List<Film> getFilmsByDirectorId(
             @PathVariable int directorId,
             @RequestParam(value = "sortBy", defaultValue = "likes") String sort) {

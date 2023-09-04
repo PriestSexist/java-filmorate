@@ -101,6 +101,7 @@ public class FilmDbStorage implements FilmStorage {
 
         ArrayList<Object[]> likes = new ArrayList<>();
         ArrayList<Object[]> genres = new ArrayList<>();
+        ArrayList<Object[]> directors = new ArrayList<>();
 
         // Запрос на изменение основных данных самого фильма
         int countOfUpdatedRows = jdbcTemplate.update(sqlQueryUpdate,
@@ -164,6 +165,28 @@ public class FilmDbStorage implements FilmStorage {
             jdbcTemplate.batchUpdate(sqlQueryInsertForFilmGenreConnection, genres);
         }
 
+        // Проверяю, есть ли разница в режиссёрах фильма из бд и режиссёрах фильма, который передали нам для замены
+        if (!filmInDb.getDirectors().containsAll(film.getDirectors()) || !film.getDirectors().containsAll(filmInDb.getDirectors())) {
+
+            // Запрос на удаление режиссёров фильма
+            String sqlQueryDropForFilmGenreConnection = "DELETE " +
+                    "FROM FILM_DIRECTORS " +
+                    "WHERE FILM_ID = ?";
+
+            // Запрос на добавление режиссёров фильма
+            String sqlQueryInsertForFilmGenreConnection = "INSERT INTO FILM_DIRECTORS(FILM_ID, DIRECTOR_ID) " +
+                    "VALUES (?, ?)";
+
+            // Если есть разница, то я удаляю всех режиссёров в бд, которые привязаны к данному фильму
+            jdbcTemplate.update(sqlQueryDropForFilmGenreConnection, filmId);
+
+            // А потом добавляю новые жанры
+            for (Director director : film.getDirectors()) {
+                directors.add(new Object[]{filmId, director.getId()});
+            }
+            jdbcTemplate.batchUpdate(sqlQueryInsertForFilmGenreConnection, directors);
+        }
+
         // Обращаюсь к бд, чтобы вернуть оттуда данные, которые туда занеслись (типа микро проверки)
         return Optional.of(film);
 
@@ -173,15 +196,13 @@ public class FilmDbStorage implements FilmStorage {
     public Collection<Film> getFilms() {
 
         // Запрос на получение всех фильмов
-        String sqlQueryForGettingFilms = "SELECT F.FILM_ID, F.NAME, F.RELEASE_DATE, F.DURATION, " +
-                "F.DESCRIPTION, M.MPA_ID, M.NAME AS MNAME, LIKE_ID, L.USER_ID, G.GENRE_ID, " +
-                "G.NAME AS GNAME, D.NAME AS DNAME" +
+        String sqlQueryForGettingFilms = "SELECT F.FILM_ID, F.NAME, F.RELEASE_DATE, F.DURATION, F.DESCRIPTION, M.MPA_ID, M.NAME AS MNAME, LIKE_ID, L.USER_ID, G.GENRE_ID, G.NAME AS GNAME, D.NAME AS DNAME " +
                 "FROM FILMS AS F " +
                 "LEFT JOIN LIKES AS L on F.FILM_ID = L.FILM_ID " +
                 "LEFT JOIN MPA AS M on F.MPA_ID = M.MPA_ID " +
                 "LEFT JOIN FILM_GENRE_CONNECTION AS FGC on F.FILM_ID = fgc.FILM_ID " +
                 "LEFT JOIN GENRES AS G on FGC.GENRE_ID = G.GENRE_ID " +
-                "LEFT JOIN FILM_DIRECTORS AS FD on FD.FILM_ID = F.FILM_ID" +
+                "LEFT JOIN FILM_DIRECTORS AS FD on FD.FILM_ID = F.FILM_ID " +
                 "LEFT JOIN DIRECTORS AS D on FD.DIRECTOR_ID = d.director_id";
 
         Film film;
@@ -256,14 +277,14 @@ public class FilmDbStorage implements FilmStorage {
         // Запрос на получение фильма по id
         String sqlQueryForOneFilm = "SELECT F.FILM_ID, F.NAME, F.RELEASE_DATE, F.DURATION, " +
                 "F.DESCRIPTION, M.MPA_ID, M.NAME AS MNAME, LIKE_ID, L.USER_ID, G.GENRE_ID, " +
-                "G.NAME AS GNAME, D.NAME AS DNAME " +
+                "G.NAME AS GNAME, D.DIRECTOR_ID, D.NAME AS DNAME " +
                 "FROM FILMS AS F " +
                 "LEFT JOIN LIKES AS L on F.FILM_ID = L.FILM_ID " +
                 "LEFT JOIN MPA AS M on F.MPA_ID = M.MPA_ID " +
                 "LEFT JOIN FILM_GENRE_CONNECTION AS FGC on F.FILM_ID = fgc.FILM_ID " +
                 "LEFT JOIN GENRES AS G on FGC.GENRE_ID = G.GENRE_ID " +
-                "LEFT JOIN FILM_DIRECTORS AS FD on FD.FILM_ID = F.FILM_ID" +
-                "LEFT JOIN DIRECTORS AS D on FD.DIRECTOR_ID = d.director_id" +
+                "LEFT JOIN FILM_DIRECTORS AS FD on FD.FILM_ID = F.FILM_ID " +
+                "LEFT JOIN DIRECTORS AS D on FD.DIRECTOR_ID = d.director_id " +
                 "WHERE F.FILM_ID = ?";
 
         Film film;
@@ -387,7 +408,7 @@ public class FilmDbStorage implements FilmStorage {
     private Genre createGenre(SqlRowSet sqlRowSet) {
         if (sqlRowSet.getInt("GENRE_ID") != 0) {
             return new Genre(sqlRowSet.getInt("GENRE_ID"),
-                    sqlRowSet.getString("DNAME"));
+                    sqlRowSet.getString("GNAME"));
         }
         return null;
     }
@@ -395,7 +416,7 @@ public class FilmDbStorage implements FilmStorage {
     private Director createDirector(SqlRowSet sqlRowSet) {
         if (sqlRowSet.getInt("DIRECTOR_ID") != 0) {
             return new Director(sqlRowSet.getInt("DIRECTOR_ID"),
-                    sqlRowSet.getString("GNAME"));
+                    sqlRowSet.getString("DNAME"));
         }
         return null;
     }
