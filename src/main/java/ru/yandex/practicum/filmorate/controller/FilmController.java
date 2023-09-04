@@ -80,7 +80,6 @@ public class FilmController {
         return filmService.getTopFilms(count);
     }
 
-    @ResponseBody
     @GetMapping("/director/{directorId}")
     public List<Film> getFilmsByDirectorId(
             @PathVariable int directorId,

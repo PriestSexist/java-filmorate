@@ -196,7 +196,7 @@ public class FilmDbStorage implements FilmStorage {
     public Collection<Film> getFilms() {
 
         // Запрос на получение всех фильмов
-        String sqlQueryForGettingFilms = "SELECT F.FILM_ID, F.NAME, F.RELEASE_DATE, F.DURATION, F.DESCRIPTION, M.MPA_ID, M.NAME AS MNAME, LIKE_ID, L.USER_ID, G.GENRE_ID, G.NAME AS GNAME, D.NAME AS DNAME " +
+        String sqlQueryForGettingFilms = "SELECT F.FILM_ID, F.NAME, F.RELEASE_DATE, F.DURATION, F.DESCRIPTION, M.MPA_ID, M.NAME AS MNAME, LIKE_ID, L.USER_ID, G.GENRE_ID, G.NAME AS GNAME, D.DIRECTOR_ID, D.NAME AS DNAME " +
                 "FROM FILMS AS F " +
                 "LEFT JOIN LIKES AS L on F.FILM_ID = L.FILM_ID " +
                 "LEFT JOIN MPA AS M on F.MPA_ID = M.MPA_ID " +
@@ -253,6 +253,7 @@ public class FilmDbStorage implements FilmStorage {
                 // Отдельно создаю объекты для Like и Genre
                 like = createLike(filmsFromDb);
                 genre = createGenre(filmsFromDb);
+                director = createDirector(filmsFromDb);
 
                 // Если лайк нашёлся и создался нормально, то я добавляю его фильму
                 if (like != null) {
@@ -262,6 +263,10 @@ public class FilmDbStorage implements FilmStorage {
                 // Если жанр нашёлся и создался нормально, то я добавляю его фильму
                 if (genre != null) {
                     film.getGenres().add(genre);
+                }
+
+                if (director != null) {
+                    film.getDirectors().add(director);
                 }
 
                 films.put(film.getId(), film);
