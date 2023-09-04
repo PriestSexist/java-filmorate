@@ -60,8 +60,7 @@ public class FilmService {
     }
 
     public Film getFilm(int directorId) {
-        Optional<Film> o_film = filmDbStorage.getFilmById(directorId);
-        return o_film.orElse(null);
+        return filmDbStorage.getFilmById(directorId).orElse(null);
     }
 
     public List<Film> getFilmsByDirectorId(int id, String sort) {
