@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.storage.film.dao;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -11,8 +10,6 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,7 +39,11 @@ public class FilmDbStorage implements FilmStorage {
         String sqlQueryForGenre = "INSERT INTO FILM_GENRE_CONNECTION(FILM_ID, GENRE_ID) " +
                 "VALUES (?, ?)";
 
+        String sqlQueryForDirector = "INSERT INTO FILM_DIRECTORS(FILM_ID, DIRECTOR_ID) " +
+                "VALUES (?, ?)";
+
         ArrayList<Object[]> genres = new ArrayList<>();
+        ArrayList<Object[]> directors = new ArrayList<>();
 
         // Мапа, которая содержит данные для вставки в таблицу films.
         // Ключ - название столбца, значение - значение
@@ -66,6 +67,14 @@ public class FilmDbStorage implements FilmStorage {
                 genres.add(new Object[]{filmId, genre.getId()});
             }
             jdbcTemplate.batchUpdate(sqlQueryForGenre, genres);
+        }
+
+        // Вставляю режисеров
+        if (film.getDirectors() != null) {
+            for (Director director : film.getDirectors()) {
+                directors.add(new Object[]{filmId, director.getId()});
+            }
+            jdbcTemplate.batchUpdate(sqlQueryForDirector, directors);
         }
 
         // Не вставляю людей, которые поставили лайки, так как при post их список всегда пустой
@@ -166,7 +175,7 @@ public class FilmDbStorage implements FilmStorage {
         // Запрос на получение всех фильмов
         String sqlQueryForGettingFilms = "SELECT F.FILM_ID, F.NAME, F.RELEASE_DATE, F.DURATION, " +
                 "F.DESCRIPTION, M.MPA_ID, M.NAME AS MNAME, LIKE_ID, L.USER_ID, G.GENRE_ID, " +
-                "G.NAME AS GNAME, D.NAME " +
+                "G.NAME AS GNAME, D.NAME AS DNAME" +
                 "FROM FILMS AS F " +
                 "LEFT JOIN LIKES AS L on F.FILM_ID = L.FILM_ID " +
                 "LEFT JOIN MPA AS M on F.MPA_ID = M.MPA_ID " +
@@ -178,6 +187,8 @@ public class FilmDbStorage implements FilmStorage {
         Film film;
         Genre genre;
         Like like;
+        Director director;
+
         // Мапа айди фильма, сам фильм
         HashMap<Integer, Film> films = new HashMap<>();
 
@@ -196,6 +207,7 @@ public class FilmDbStorage implements FilmStorage {
                 // Отдельно создаю объекты для like и Genres и добавляю их в объект фильма
                 like = createLike(filmsFromDb);
                 genre = createGenre(filmsFromDb);
+                director = createDirector(filmsFromDb);
 
                 // Если лайк нашёлся и создался нормально, то я добавляю его фильму
                 if (like != null) {
@@ -205,6 +217,10 @@ public class FilmDbStorage implements FilmStorage {
                 // Если жанр нашёлся и создался нормально, то я добавляю его фильму
                 if (genre != null) {
                     film.getGenres().add(genre);
+                }
+
+                if (director != null) {
+                    film.getDirectors().add(director);
                 }
 
                 // Если ключа нет в мапе
@@ -238,17 +254,22 @@ public class FilmDbStorage implements FilmStorage {
     public Optional<Film> getFilmById(int id) {
 
         // Запрос на получение фильма по id
-        String sqlQueryForOneFilm = "SELECT F.FILM_ID, F.NAME, F.RELEASE_DATE, F.DURATION, F.DESCRIPTION, M.MPA_ID, M.NAME AS MNAME, LIKE_ID, L.USER_ID, G.GENRE_ID, G.NAME AS GNAME " +
+        String sqlQueryForOneFilm = "SELECT F.FILM_ID, F.NAME, F.RELEASE_DATE, F.DURATION, " +
+                "F.DESCRIPTION, M.MPA_ID, M.NAME AS MNAME, LIKE_ID, L.USER_ID, G.GENRE_ID, " +
+                "G.NAME AS GNAME, D.NAME AS DNAME " +
                 "FROM FILMS AS F " +
                 "LEFT JOIN LIKES AS L on F.FILM_ID = L.FILM_ID " +
                 "LEFT JOIN MPA AS M on F.MPA_ID = M.MPA_ID " +
                 "LEFT JOIN FILM_GENRE_CONNECTION AS FGC on F.FILM_ID = fgc.FILM_ID " +
                 "LEFT JOIN GENRES AS G on FGC.GENRE_ID = G.GENRE_ID " +
+                "LEFT JOIN FILM_DIRECTORS AS FD on FD.FILM_ID = F.FILM_ID" +
+                "LEFT JOIN DIRECTORS AS D on FD.DIRECTOR_ID = d.director_id" +
                 "WHERE F.FILM_ID = ?";
 
         Film film;
         Genre genre;
         Like like;
+        Director director;
 
         // Выполнение запроса
         SqlRowSet rowsForOneFilm = jdbcTemplate.queryForRowSet(sqlQueryForOneFilm, id);
@@ -264,6 +285,7 @@ public class FilmDbStorage implements FilmStorage {
             // Отдельно создаю объекты для Like и Genre
             like = createLike(rowsForOneFilm);
             genre = createGenre(rowsForOneFilm);
+            director = createDirector(rowsForOneFilm);
 
             // Если лайк нашёлся и создался нормально, то я добавляю его фильму
             if (like != null) {
@@ -273,6 +295,10 @@ public class FilmDbStorage implements FilmStorage {
             // Если жанр нашёлся и создался нормально, то я добавляю его фильму
             if (genre != null) {
                 film.getGenres().add(genre);
+            }
+
+            if (director != null) {
+                film.getDirectors().add(director);
             }
 
             // Если больше строк нет, то возвращаю то, что есть
@@ -288,6 +314,7 @@ public class FilmDbStorage implements FilmStorage {
                 // Отдельно создаю объекты для like и Genres и добавляю их в объект фильма
                 like = createLike(rowsForOneFilm);
                 genre = createGenre(rowsForOneFilm);
+                director = createDirector(rowsForOneFilm);
 
                 // Если лайк нашёлся и создался нормально, то я добавляю его фильму
                 if (like != null) {
@@ -297,6 +324,10 @@ public class FilmDbStorage implements FilmStorage {
                 // Если жанр нашёлся и создался нормально, то я добавляю его фильму
                 if (genre != null) {
                     film.getGenres().add(genre);
+                }
+
+                if (director != null) {
+                    film.getDirectors().add(director);
                 }
 
             }
@@ -356,6 +387,14 @@ public class FilmDbStorage implements FilmStorage {
     private Genre createGenre(SqlRowSet sqlRowSet) {
         if (sqlRowSet.getInt("GENRE_ID") != 0) {
             return new Genre(sqlRowSet.getInt("GENRE_ID"),
+                    sqlRowSet.getString("DNAME"));
+        }
+        return null;
+    }
+
+    private Director createDirector(SqlRowSet sqlRowSet) {
+        if (sqlRowSet.getInt("DIRECTOR_ID") != 0) {
+            return new Director(sqlRowSet.getInt("DIRECTOR_ID"),
                     sqlRowSet.getString("GNAME"));
         }
         return null;
@@ -385,40 +424,5 @@ public class FilmDbStorage implements FilmStorage {
     public List<Integer> getDirectorsIdByFilmId(int filmId) {
         String sqlQuery = "select director_id from film_directors where film_id = ? order by director_id";
         return jdbcTemplate.queryForList(sqlQuery, Integer.class, filmId);
-    }
-
-    @Override
-    public void deleteFilmDirectors(int filmId) {
-        String sqlQuery = "delete from film_directors where film_id = ?";
-        jdbcTemplate.update(sqlQuery, filmId);
-    }
-
-    @Override
-    public void addDirectorToFilm(Integer filmId, Integer directorId) {
-        String sqlQuery = "merge into film_directors KEY (film_id, director_id) values(?, ?)";
-        jdbcTemplate.update(sqlQuery, filmId, directorId);
-    }
-
-    @Override
-    public void setFilmDirectors(List<Director> directors, int filmId) {
-        if (directors == null || directors.size() == 0) return;
-        jdbcTemplate.batchUpdate(
-                "insert into film_directors (film_id, director_id) VALUES (?, ?)",
-                new BatchPreparedStatementSetter() {
-                    public void setValues(PreparedStatement ps, int i) throws SQLException {
-                        ps.setInt(1, filmId);
-                        ps.setInt(2, directors.get(i).getId());
-                    }
-
-                    public int getBatchSize() {
-                        return directors.size();
-                    }
-                });
-    }
-
-    @Override
-    public void updateFilmDirectors(List<Director> directors, int filmId) {
-        deleteFilmDirectors(filmId);
-        setFilmDirectors(directors, filmId);
     }
 }

@@ -23,12 +23,4 @@ public interface FilmStorage {
     List<Integer> getFilmsIdByDirectorId(int id);
 
     List<Integer> getDirectorsIdByFilmId(int filmId);
-
-    void deleteFilmDirectors(int filmId);
-
-    void addDirectorToFilm(Integer filmId, Integer directorId);
-
-    void setFilmDirectors(List<Director> directorsId, int filmId);
-
-    void updateFilmDirectors(List<Director> directorsId, int filmId);
 }

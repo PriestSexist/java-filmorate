@@ -61,17 +61,9 @@ public class FilmService {
                 .collect(Collectors.toList());
     }
 
-    public Film getFilm(int id) {
-        Optional<Film> o_film = filmDbStorage.getFilmById(id);
-        if (o_film.isPresent()) {
-            Film film = o_film.get();
-            List<Director> directors = filmDbStorage.getDirectorsIdByFilmId(film.getId()).stream()
-                    .map(directorStorage::getDirector)
-                    .collect(Collectors.toList());
-            film.setDirectors(directors);
-            return film;
-        }
-        return null;
+    public Film getFilm(int directorId) {
+        Optional<Film> o_film = filmDbStorage.getFilmById(directorId);
+        return o_film.orElse(null);
     }
 
     public List<Film> getFilmsByDirectorId(int id, String sort) {
@@ -83,14 +75,6 @@ public class FilmService {
             List<Film> films = filmDbStorage.getFilmsIdByDirectorId(id).stream()
                     .map(this::getFilm)
                     .collect(Collectors.toList());
-
-            for (Film film: films) {
-                List<Director> directors = filmDbStorage.getDirectorsIdByFilmId(film.getId())
-                        .stream()
-                        .map(directorStorage::getDirector)
-                        .collect(Collectors.toList());
-                film.setDirectors(directors);
-            }
 
             if (sort.equals("likes")) {
                 Comparator<Film> comparator = Comparator.comparing(film -> film.getLikes().size());

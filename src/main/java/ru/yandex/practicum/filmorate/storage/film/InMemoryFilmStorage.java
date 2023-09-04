@@ -70,24 +70,4 @@ public class InMemoryFilmStorage implements FilmStorage {
     public List<Integer> getDirectorsIdByFilmId(int filmId) {
         return null;
     }
-
-    @Override
-    public void deleteFilmDirectors(int filmId) {
-
-    }
-
-    @Override
-    public void addDirectorToFilm(Integer filmId, Integer directorId) {
-
-    }
-
-    @Override
-    public void setFilmDirectors(List<Director> directorsId, int filmId) {
-
-    }
-
-    @Override
-    public void updateFilmDirectors(List<Director> directorsId, int filmId) {
-
-    }
 }
