@@ -13,9 +13,11 @@ public class UserService {
 
     private final UserStorage userDbStorage;
 
+
     @Autowired
-    public UserService(UserStorage userDbStorage) {
+    public UserService(UserStorage userDbStorage) {   // !!!
         this.userDbStorage = userDbStorage;
+
     }
 
     public Optional<User> postUser(User user) {
@@ -60,4 +62,7 @@ public class UserService {
         return userDbStorage.getCommonFriends(userId, otherId);
     }
 
+    public void deleteUser(int userId) {
+        userDbStorage.deleteUser(userId);
+    }
 }

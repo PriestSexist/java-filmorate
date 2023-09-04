@@ -17,4 +17,6 @@ public interface FilmStorage {
     Optional<Film> putLikeToFilm(int filmId, int userId);
 
     Optional<Film> deleteLikeFromFilm(int filmId, int userId);
+
+    void deleteFilm(int filmId);
 }

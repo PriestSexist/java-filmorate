@@ -65,6 +65,7 @@ public class FilmDbStorage implements FilmStorage {
             for (Genre genre : film.getGenres()) {
                 genres.add(new Object[]{filmId, genre.getId()});
             }
+
             jdbcTemplate.batchUpdate(sqlQueryForGenre, genres);
         }
 
@@ -132,7 +133,7 @@ public class FilmDbStorage implements FilmStorage {
             }
             jdbcTemplate.batchUpdate(sqlQueryInsertForLikes, likes);
         }
-
+// это put метод
         // Проверяю, есть ли разница в жанрах фильма из бд и жанрах фильма, который передали нам для замены
         if (!filmInDb.getGenres().containsAll(film.getGenres()) || !film.getGenres().containsAll(filmInDb.getGenres())) {
 
@@ -227,6 +228,7 @@ public class FilmDbStorage implements FilmStorage {
 
             }
         }
+
         return films.values().stream().sorted(Comparator.comparingInt(Film::getId)).collect(Collectors.toList());
     }
 
@@ -357,7 +359,7 @@ public class FilmDbStorage implements FilmStorage {
         return null;
     }
 
-    private Film createFilm(SqlRowSet sqlRowSet) {
+    private Film createFilm(SqlRowSet sqlRowSet) {        // !!
         return new Film(sqlRowSet.getInt("FILM_ID"),
                 sqlRowSet.getString("NAME"),
                 sqlRowSet.getString("DESCRIPTION"),
@@ -369,6 +371,13 @@ public class FilmDbStorage implements FilmStorage {
     private Mpa createMpa(SqlRowSet sqlRowSet) {
         return new Mpa(sqlRowSet.getInt("MPA_ID"),
                 sqlRowSet.getString("MNAME"));
+    }
+
+    @Override
+    public void deleteFilm(int filmId) {
+        final String sqlQuery = "DELETE FROM FILMS WHERE FILM_ID=?";
+
+        jdbcTemplate.update(sqlQuery, filmId);
     }
 
 }

@@ -1,3 +1,5 @@
+DROP ALL OBJECTS;
+
 create table IF NOT EXISTS GENRES
 (
     GENRE_ID INTEGER auto_increment,

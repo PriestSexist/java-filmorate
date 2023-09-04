@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Like;
 
@@ -57,6 +58,14 @@ public class InMemoryFilmStorage implements FilmStorage {
             getFilmById(filmId).get().getLikes().remove(new Like(counterForLikes.incrementAndGet(), filmId, userId));
         }
         return getFilmById(filmId);
+    }
+
+    @Override
+    public void deleteFilm(int filmId) {
+        if (!films.contains(filmId)) {
+            throw new NotFoundException("Такого id " + filmId + " фильма нет чтобы удалить.");
+        }
+        films.remove(filmId);
     }
 
 }

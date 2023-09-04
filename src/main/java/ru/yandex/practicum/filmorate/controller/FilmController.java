@@ -6,12 +6,14 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.film.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.exception.film.InvalidReleaseDateException;
+import ru.yandex.practicum.filmorate.exception.user.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/films")
@@ -77,6 +79,18 @@ public class FilmController {
     @GetMapping("/popular")
     public Collection<Film> getTopFilms(@RequestParam(defaultValue = "10") int count) {
         return filmService.getTopFilms(count);
+    }
+
+
+    @DeleteMapping("/{filmId}")
+    public void deleteFilm(@PathVariable int filmId) {
+        Optional<Film> optionalFilm = filmService.getFilmById(filmId);
+
+        if (optionalFilm.isEmpty()) {
+            throw new UserNotFoundException("Film not found");
+        }
+
+        filmService.deleteFilm(filmId);
     }
 
 }
