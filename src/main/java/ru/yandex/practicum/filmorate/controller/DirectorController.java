@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.DirectorService;
 
 import javax.validation.Valid;
@@ -17,7 +16,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DirectorController {
 
-    /** Поле сервисного слоя добавления режисеров */
+    /**
+     * Поле сервисного слоя добавления режисеров
+     */
     private final DirectorService directorService;
 
     @ResponseBody
