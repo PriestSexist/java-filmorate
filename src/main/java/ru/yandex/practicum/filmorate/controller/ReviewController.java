@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.Review.ReviewNotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.service.ReviewService;
@@ -53,22 +54,30 @@ public class ReviewController {
     }
 
     @PutMapping("/{reviewId}/like/{userId}")
-    public void putLikeToReview(@PathVariable int reviewId, @PathVariable int userId) {
-        reviewService.putLikeToReview(reviewId, userId);
+    public Review putLikeToReview(@PathVariable int reviewId, @PathVariable int userId) {
+        return reviewService.putLikeToReview(reviewId, userId).orElseThrow(() -> {
+            throw new NotFoundException("Film or User is not found");
+        });
     }
 
     @PutMapping("/{reviewId}/dislike/{userId}")
-    public void putDislikeToReview(@PathVariable int reviewId, @PathVariable int userId) {
-        reviewService.putDislikeToReview(reviewId, userId);
+    public Review putDislikeToReview(@PathVariable int reviewId, @PathVariable int userId) {
+        return reviewService.putDislikeToReview(reviewId, userId).orElseThrow(() -> {
+            throw new NotFoundException("Film or User is not found");
+        });
     }
 
     @DeleteMapping("/{reviewId}/like/{userId}")
-    public void deleteLikeFromReview(@PathVariable int reviewId, @PathVariable int userId) {
-        reviewService.deleteLikeFromReview(reviewId, userId);
+    public Review deleteLikeFromReview(@PathVariable int reviewId, @PathVariable int userId) {
+        return reviewService.deleteLikeFromReview(reviewId, userId).orElseThrow(() -> {
+            throw new NotFoundException("Film or User is not found");
+        });
     }
 
     @DeleteMapping("/{reviewId}/dislike/{userId}")
-    public void deleteDislikeFromReview(@PathVariable int reviewId, @PathVariable int userId) {
-        reviewService.deleteDislikeFromReview(reviewId, userId);
+    public Review deleteDislikeFromReview(@PathVariable int reviewId, @PathVariable int userId) {
+        return reviewService.deleteDislikeFromReview(reviewId, userId).orElseThrow(() -> {
+            throw new NotFoundException("Film or User is not found");
+        });
     }
 }

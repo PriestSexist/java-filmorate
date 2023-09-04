@@ -7,7 +7,6 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.Review.ReviewNotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
@@ -21,10 +20,14 @@ import java.util.*;
 public class ReviewDbStorage implements ReviewStorage {
 
     private final JdbcTemplate jdbcTemplate;
+    private final SimpleJdbcInsert simpleJdbcInsertForReviews;
 
     @Autowired
     public ReviewDbStorage(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
+        simpleJdbcInsertForReviews = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("reviews")
+                .usingGeneratedKeyColumns("review_id");
     }
 
     @Override
@@ -37,12 +40,9 @@ public class ReviewDbStorage implements ReviewStorage {
         values.put("user_id", review.getUserId());
         values.put("useful", review.getUseful());
 
-        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
-                .withTableName("reviews")
-                .usingGeneratedKeyColumns("review_id");
         log.debug("Creating review {}", review);
 
-        int reviewId = simpleJdbcInsert.executeAndReturnKey(values).intValue();
+        int reviewId = simpleJdbcInsertForReviews.executeAndReturnKey(values).intValue();
 
         review.setReviewId(reviewId);
         return Optional.of(review);
@@ -55,14 +55,20 @@ public class ReviewDbStorage implements ReviewStorage {
         String sql = "UPDATE reviews SET content = ?, is_positive = ? WHERE review_id = ?"; //userId & filmId final поля, не меняем
         log.debug("Updating review {}", review);
 
-        checkRowsUpdated(jdbcTemplate.update(sql, review.getContent(), review.getIsPositive(), reviewId));
+        if (jdbcTemplate.update(sql, review.getContent(), review.getIsPositive(), reviewId) == 0) {
+            log.debug("Review with id {} is not found", reviewId);
+            return Optional.empty();
+        }
         return getReviewById(reviewId);
     }
 
     @Override
     public void deleteReview(int reviewId) {
         String sql = "DELETE FROM reviews WHERE review_id = ?";
-        checkRowsUpdated(jdbcTemplate.update(sql, reviewId));
+        if (jdbcTemplate.update(sql, reviewId) == 0) {
+            log.debug("Review with id {} is not found", reviewId);
+            throw new ReviewNotFoundException("Review is not found");
+        }
     }
 
     @Override
@@ -92,47 +98,60 @@ public class ReviewDbStorage implements ReviewStorage {
     }
 
     @Override
-    public void putLikeToReview(int reviewId, int userId) {
+    public Optional<Review> putLikeToReview(int reviewId, int userId) {
         String sql = "INSERT INTO review_rating (review_id, user_id, points) VALUES (?, ?, ?)";
 
         try {
-            checkRowsUpdated(jdbcTemplate.update(sql, reviewId, userId, 1));
+            if (jdbcTemplate.update(sql, reviewId, userId, 1) == 0) {
+                log.debug("Review with id {} is not found", reviewId);
+                return Optional.empty();
+            }
+            return getReviewById(reviewId);
         } catch (DataIntegrityViolationException e) {
-            throw new NotFoundException("User or Film with provided id is not found");
+            return Optional.empty();
         }
     }
 
     @Override
-    public void putDislikeToReview(int reviewId, int userId) {
+    public Optional<Review> putDislikeToReview(int reviewId, int userId) {
         String sql = "INSERT INTO review_rating (review_id, user_id, points) VALUES (?, ?, ?)";
 
         try {
-            checkRowsUpdated(jdbcTemplate.update(sql, reviewId, userId, -1));
+            if (jdbcTemplate.update(sql, reviewId, userId, -1) == 0) {
+                return Optional.empty();
+            }
         } catch (DataIntegrityViolationException e) {
-            throw new NotFoundException("User or Film with provided id is not found");
+            return Optional.empty();
         }
+        return getReviewById(reviewId);
     }
 
     @Override
-    public void deleteLikeFromReview(int reviewId, int userId) {
+    public Optional<Review> deleteLikeFromReview(int reviewId, int userId) {
         String sql = "DELETE FROM review_rating WHERE review_id = ? AND user_id = ? AND points = ?";
 
         try {
-            checkRowsUpdated(jdbcTemplate.update(sql, reviewId, userId, 1));
+            if (jdbcTemplate.update(sql, reviewId, userId, 1) == 0) {
+                return Optional.empty();
+            }
         } catch (DataIntegrityViolationException e) {
-            throw new NotFoundException("User or Film with provided id is not found");
+            return Optional.empty();
         }
+        return getReviewById(reviewId);
     }
 
     @Override
-    public void deleteDislikeFromReview(int reviewId, int userId) {
+    public Optional<Review> deleteDislikeFromReview(int reviewId, int userId) {
         String sql = "DELETE FROM review_rating WHERE review_id = ? AND user_id = ? AND points = ?";
 
         try {
-            checkRowsUpdated(jdbcTemplate.update(sql, reviewId, userId, -1));
+            if (jdbcTemplate.update(sql, reviewId, userId, -1) == 0) {
+                return Optional.empty();
+            }
         } catch (DataIntegrityViolationException e) {
-            throw new NotFoundException("User or Film with provided id is not found");
+            return Optional.empty();
         }
+        return getReviewById(reviewId);
     }
 
     private Integer calculateUseful(int reviewId) {
@@ -142,13 +161,6 @@ public class ReviewDbStorage implements ReviewStorage {
             return 0;
         }
         return pointsCount;
-    }
-
-    private void checkRowsUpdated(int result) {
-        if (result == 0) {
-            log.debug("Review is not found");
-            throw new ReviewNotFoundException("Review is not found.");
-        }
     }
 
     private Review reviewFromSql(ResultSet rs, int rowNum) throws SQLException {

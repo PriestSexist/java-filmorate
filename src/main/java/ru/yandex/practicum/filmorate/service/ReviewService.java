@@ -58,20 +58,20 @@ public class ReviewService {
         }
     }
 
-    public void putLikeToReview(int reviewId, int userId) {
-        reviewStorage.putLikeToReview(reviewId, userId);
+    public Optional<Review> putLikeToReview(int reviewId, int userId) {
+        return reviewStorage.putLikeToReview(reviewId, userId);
     }
 
-    public void putDislikeToReview(int reviewId, int userId) {
-        reviewStorage.putDislikeToReview(reviewId, userId);
+    public Optional<Review> putDislikeToReview(int reviewId, int userId) {
+        return reviewStorage.putDislikeToReview(reviewId, userId);
     }
 
-    public void deleteLikeFromReview(int reviewId, int userId) {
-        reviewStorage.deleteLikeFromReview(reviewId, userId);
+    public Optional<Review> deleteLikeFromReview(int reviewId, int userId) {
+        return reviewStorage.deleteLikeFromReview(reviewId, userId);
     }
 
-    public void deleteDislikeFromReview(int reviewId, int userId) {
-        reviewStorage.deleteDislikeFromReview(reviewId, userId);
+    public Optional<Review> deleteDislikeFromReview(int reviewId, int userId) {
+        return reviewStorage.deleteDislikeFromReview(reviewId, userId);
     }
 
     private void checkUserId(int userId) {

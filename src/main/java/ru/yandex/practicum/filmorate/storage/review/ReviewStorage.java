@@ -19,11 +19,11 @@ public interface ReviewStorage {
 
     List<Review> getReviewsByFilmId(Integer filmId, int count);
 
-    void putLikeToReview(int reviewId, int userId);
+    Optional<Review> putLikeToReview(int reviewId, int userId);
 
-    void putDislikeToReview(int reviewId, int userId);
+    Optional<Review> putDislikeToReview(int reviewId, int userId);
 
-    void deleteLikeFromReview(int reviewId, int userId);
+    Optional<Review> deleteLikeFromReview(int reviewId, int userId);
 
-    void deleteDislikeFromReview(int reviewId, int userId);
+    Optional<Review> deleteDislikeFromReview(int reviewId, int userId);
 }

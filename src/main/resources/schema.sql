@@ -83,6 +83,7 @@ create table IF NOT EXISTS REVIEW_RATING
             on delete cascade,
     constraint "REVIEW_RATING_USERS_USER_ID_fk"
         foreign key (USER_ID) references USERS
+            on delete cascade
 );
 
 create table IF NOT EXISTS FRIEND_REQUEST
