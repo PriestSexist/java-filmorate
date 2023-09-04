@@ -362,6 +362,8 @@ public class FilmDbStorage implements FilmStorage {
         String sqlQuery = "SELECT * FROM films " +
                 "LEFT JOIN likes ON films.film_id = likes.film_id " +
                 //добавить Таблицу DIRECTOR
+                // "LEFT JOIN film_directors ON films.film_id = film_directors.film_id " +
+                // "LEFT JOIN directors ON film_directors.director_id = directors.director_id " +
                 "WHERE LOWER(directors.name) LIKE LOWER(?) " +   // проверить поле директор
                 "GROUP BY films.film_id ORDER BY COUNT(likes.user_id) DESC ";
         String searchQuery = "%" + query + "%";
@@ -373,6 +375,8 @@ public class FilmDbStorage implements FilmStorage {
         String sqlQuery = "SELECT * FROM films " +
                 "LEFT JOIN likes ON films.film_id = likes.film_id " +
                 //добавить Таблицу DIRECTOR
+                // "LEFT JOIN film_directors ON films.film_id = film_directors.film_id " +
+                // "LEFT JOIN directors ON film_directors.director_id = directors.director_id " +
                 "WHERE LOWER(films.name) LIKE LOWER(?) OR LOWER(directors.name) LIKE LOWER(?)" +  // проверить поле директор
                 "GROUP BY films.film_id ORDER BY COUNT(likes.user_id) DESC ";
         String searchQuery = "%" + query + "%";
@@ -391,17 +395,36 @@ public class FilmDbStorage implements FilmStorage {
         Mpa mpa = mpaStorage.getMpaById(mpaId).get();
         ArrayList<Genre> genres = getFilmGenreByFilmId(id);
         HashSet<Like> likes = getLikes(id);
+        //добавить директора
+        // List<Director>directors = getDirectorsByFilmId(id);
         Film film = Film.builder().name(name).description(description).releaseDate(releaseDate).duration(duration)
                 .mpa(mpa).build();
         film.getGenres().addAll(genres);
         film.getLikes().addAll(likes);
+        //film.getDirectors().addAll(directors);
         film.setId(id);
         return film;
     }
 
+    //проверить директоров
+    /*
+    public List<Director> getDirectorsByFilmId(int filmId) {
+        String sqlQuery = "SELECT * FROM directors WHERE director_id IN " +
+                "(SELECT director_id FROM film_directors WHERE film_id = ?) ORDER BY directors.name DESC ";
+        SqlRowSet directorsRows = jdbcTemplate.queryForRowSet(sqlQuery, filmId);
+        List<Director> filmDirectors = new ArrayList<>();
+        while (directorsRows.next()) {
+            Director directorFilm = new Director(directorsRows.getInt("director_id"),
+                    directorsRows.getString("name"));
+            filmDirectors.add(directorFilm);
+        }
+        return filmDirectors;
+    }*/
+
     public ArrayList<Genre> getFilmGenreByFilmId(int filmId) {
-        SqlRowSet genresRows = jdbcTemplate.queryForRowSet("select * from genres where genre_id in " +
-                "(select genre_id from FILM_GENRE_CONNECTION where film_id = ?) order by genre_id asc ", filmId);
+        String sqlQuery = "SELECT * FROM genres WHERE genre_id in " +
+                "(SELECT genre_id FROM FILM_GENRE_CONNECTION WHERE film_id = ?) ORDER BY genre_id DESC ";
+        SqlRowSet genresRows = jdbcTemplate.queryForRowSet(sqlQuery, filmId);
         ArrayList<Genre> filmGenres = new ArrayList<>();
         while (genresRows.next()) {
             Genre genreFilm = new Genre(genresRows.getInt("genre_id"),
