@@ -37,7 +37,7 @@ public class FilmController {
         return filmService.postFilm(film).get();
     }
 
-    @PutMapping
+    @PutMapping("/films")
     public Film putFilm(@Valid @RequestBody Film film) {
 
         if (!film.getReleaseDate().isAfter(BIRTH_OF_CINEMA) && !film.getReleaseDate().equals(BIRTH_OF_CINEMA)) {
