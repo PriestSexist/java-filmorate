@@ -29,7 +29,8 @@ public class ReviewService {
     }
 
     public Optional<Review> postReview(Review review) {
-        checkUserId(review.getUserId()); //проверяю тут, чтобы не генерировались лишние id при ошибке создания review
+        checkUserId(review.getUserId()); /*если не проверять id тут, а просто отлавливать ошибки в ReviewDbStorage,
+        то id генерируются с  gap, по тестам это получается 1, 4, 5*/
         checkFilmId(review.getFilmId());
         return reviewStorage.postReview(review);
     }
@@ -58,20 +59,20 @@ public class ReviewService {
         }
     }
 
-    public Optional<Review> putLikeToReview(int reviewId, int userId) {
-        return reviewStorage.putLikeToReview(reviewId, userId);
+    public void putLikeToReview(int reviewId, int userId) {
+        reviewStorage.putLikeToReview(reviewId, userId);
     }
 
-    public Optional<Review> putDislikeToReview(int reviewId, int userId) {
-        return reviewStorage.putDislikeToReview(reviewId, userId);
+    public void putDislikeToReview(int reviewId, int userId) {
+        reviewStorage.putDislikeToReview(reviewId, userId);
     }
 
-    public Optional<Review> deleteLikeFromReview(int reviewId, int userId) {
-        return reviewStorage.deleteLikeFromReview(reviewId, userId);
+    public void deleteLikeFromReview(int reviewId, int userId) {
+        reviewStorage.deleteLikeFromReview(reviewId, userId);
     }
 
-    public Optional<Review> deleteDislikeFromReview(int reviewId, int userId) {
-        return reviewStorage.deleteDislikeFromReview(reviewId, userId);
+    public void deleteDislikeFromReview(int reviewId, int userId) {
+        reviewStorage.deleteDislikeFromReview(reviewId, userId);
     }
 
     private void checkUserId(int userId) {
