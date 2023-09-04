@@ -18,11 +18,9 @@ public class Review {
     private String content;
     @NotNull(message = "IsPositive cannot be empty or null")
     private Boolean isPositive; //использую класс-обертку, чтобы можно было проверить на null
-    //@NotNull(message = "UserId cannot be null")
-    @Positive(message = "UserId cannot be zero or negative")
+    @NotNull(message = "UserId cannot be null")
     private final Integer userId;
-   // @NotNull(message = "FilmId cannot be null")
-    @Positive(message = "FilmId cannot be zero or negative")
+    @NotNull(message = "FilmId cannot be null")
     private final Integer filmId;
     private int useful;
 }
