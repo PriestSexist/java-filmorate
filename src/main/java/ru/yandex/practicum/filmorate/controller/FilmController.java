@@ -104,5 +104,4 @@ public class FilmController {
                                               @RequestParam List<String> by) {
         return filmService.searchByTitleByDirector(query, by);
     }
-
 }

@@ -85,7 +85,6 @@ public class FilmService {
         return topFilms;
     }
 
-
     public Collection<Film> getCommonFilms(int userId, int friendId) {
 
         Comparator<Film> comparator = Comparator.comparing(film -> film.getLikes().size());

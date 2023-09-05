@@ -447,7 +447,6 @@ public class FilmDbStorage implements FilmStorage {
         return Optional.empty();
     }
 
-
     @Override
     public List<Film> searchByTitle(String query) {
         String sqlQuery = "SELECT * FROM films " +
