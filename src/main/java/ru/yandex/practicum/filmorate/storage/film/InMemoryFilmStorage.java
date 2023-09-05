@@ -5,6 +5,7 @@ import ru.yandex.practicum.filmorate.model.Like;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -57,6 +58,32 @@ public class InMemoryFilmStorage implements FilmStorage {
             getFilmById(filmId).get().getLikes().remove(new Like(counterForLikes.incrementAndGet(), filmId, userId));
         }
         return getFilmById(filmId);
+    }
+
+    @Override
+    public List<Integer> getFilmsIdByDirectorId(int id) {
+        return null;
+    }
+
+    //Удалю при следующем push. Дублируется
+ /*   @Override
+    public List<Integer> getDirectorsIdByFilmId(int filmId) {
+        return null;
+    }*/
+
+    @Override
+    public List<Film> searchByTitle(String query) {
+        return null;
+    }
+
+    @Override
+    public List<Film> searchByDirector(String query) {
+        return null;
+    }
+
+    @Override
+    public List<Film> searchByTitleByDirector(String query) {
+        return null;
     }
 
 }
