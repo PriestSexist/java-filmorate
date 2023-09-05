@@ -57,12 +57,32 @@ public class FilmService {
         return filmDbStorage.deleteLikeFromFilm(filmId, userId);
     }
 
-    public List<Film> getTopFilms(int count) {
-        Comparator<Film> comparator = Comparator.comparing(film -> film.getLikes().size());
-        return getFilms().stream()
-                .sorted(comparator.reversed())
-                .limit(count)
-                .collect(Collectors.toList());
+    public List<Film> getTopFilms(Map<String, String> allParams) {
+        List<Film> topFilms = new ArrayList<>();
+        int count;
+        if (allParams.containsKey("count")) {
+            count = Integer.parseInt(allParams.get("count"));
+        } else {
+            count = 10;
+        }
+        if (!allParams.containsKey("year") && !allParams.containsKey("genreId")) {
+            Comparator<Film> comparator = Comparator.comparing(film -> film.getLikes().size());
+            topFilms = getFilms().stream()
+                    .sorted(comparator.reversed())
+                    .limit(count)
+                    .collect(Collectors.toList());
+        } else if (allParams.containsKey("genreId") && allParams.containsKey("year")) {
+            int genreId = Integer.parseInt(allParams.get("genreId"));
+            int year = Integer.parseInt(allParams.get("year"));
+            topFilms = filmDbStorage.getPopularByGenreByYear(count, genreId, year);
+        } else if (allParams.containsKey("genreId")) {
+            int genreId = Integer.parseInt(allParams.get("genreId"));
+            topFilms = filmDbStorage.getPopularByGenre(count, genreId);
+        } else if (allParams.containsKey("year")) {
+            int year = Integer.parseInt(allParams.get("year"));
+            topFilms = filmDbStorage.getPopularByYear(count, year);
+        }
+        return topFilms;
     }
 
     public Collection<Film> getCommonFilms(int userId, int friendId) {
@@ -109,14 +129,14 @@ public class FilmService {
 
 
     public List<Film> searchByTitleByDirector(String query, List<String> by) {
-        List<Film> searchFimls = new ArrayList<>();
+        List<Film> searchFilms = new ArrayList<>();
         if (by.contains("title") && by.contains("director")) {
-            searchFimls = filmDbStorage.searchByTitleByDirector(query);
+            searchFilms = filmDbStorage.searchByTitleByDirector(query);
         } else if (by.contains("title")) {
-            searchFimls = filmDbStorage.searchByTitle(query);
+            searchFilms = filmDbStorage.searchByTitle(query);
         } else if (by.contains("director")) {
-            searchFimls = filmDbStorage.searchByDirector(query);
+            searchFilms = filmDbStorage.searchByDirector(query);
         }
-        return searchFimls;
+        return searchFilms;
     }
 }

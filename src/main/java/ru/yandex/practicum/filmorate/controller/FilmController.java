@@ -13,6 +13,7 @@ import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/films")
@@ -76,8 +77,8 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public Collection<Film> getTopFilms(@RequestParam(defaultValue = "10") int count) {
-        return filmService.getTopFilms(count);
+    public Collection<Film> getTopFilms(@RequestParam Map<String, String> allParams) {
+        return filmService.getTopFilms(allParams);
     }
 
     @GetMapping("/common")
@@ -102,7 +103,5 @@ public class FilmController {
     public List<Film> searchByTitleByDirector(@RequestParam String query,
                                               @RequestParam List<String> by) {
         return filmService.searchByTitleByDirector(query, by);
-
     }
-
 }

@@ -24,7 +24,7 @@ public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert simpleJdbcInsertForFilms;
     private final SimpleJdbcInsert simpleJdbcInsertForLikes;
-    private final MpaStorage mpaStorage; // добавлен в ветке add-most-popular
+    private final MpaStorage mpaStorage;
 
     @Autowired
     public FilmDbStorage(JdbcTemplate jdbcTemplate, MpaStorage mpaStorage) {
@@ -35,7 +35,7 @@ public class FilmDbStorage implements FilmStorage {
         this.simpleJdbcInsertForLikes = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("LIKES")
                 .usingGeneratedKeyColumns("LIKE_ID");
-        this.mpaStorage = mpaStorage; // добавлен в ветке add-most-popular
+        this.mpaStorage = mpaStorage;
     }
 
     @Override
@@ -377,6 +377,38 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
+    public List<Film> getPopularByGenre(int count, int genreId) {
+        String sqlQuery = "SELECT * " +
+                "FROM FILMS AS F " +
+                "LEFT JOIN LIKES AS L on F.FILM_ID = L.FILM_ID " +
+                "LEFT JOIN FILM_GENRE_CONNECTION AS FGC on F.FILM_ID = fgc.FILM_ID " +
+                "WHERE FGC.GENRE_ID = ?" +
+                "GROUP BY f.film_id ORDER BY COUNT(l.user_id) DESC LIMIT ?";
+        return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs), genreId, count);
+
+    }
+
+    @Override
+    public List<Film> getPopularByYear(int count, int year) {
+        String sqlQuery = "SELECT * " +
+                "FROM FILMS AS F " +
+                "LEFT JOIN LIKES AS L on F.FILM_ID = L.FILM_ID " +
+                "WHERE EXTRACT(YEAR FROM f.release_date) = ? " +
+                "GROUP BY f.film_id ORDER BY COUNT(l.user_id) DESC LIMIT ?";
+        return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs), year, count);
+    }
+
+    @Override
+    public List<Film> getPopularByGenreByYear(int count, int genreId, int year) {
+        String sqlQuery = "SELECT * FROM films " +
+                "INNER JOIN FILM_GENRE_CONNECTION ON FILM_GENRE_CONNECTION.film_id = films.film_id " +
+                "LEFT JOIN LIKES AS L on films.FILM_ID = L.FILM_ID " +
+                "WHERE EXTRACT(YEAR FROM films.release_date) = ? AND FILM_GENRE_CONNECTION.genre_id = ?" +
+                "GROUP BY films.film_id ORDER BY COUNT(l.user_id) DESC LIMIT ?";
+        return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs), year, genreId, count);
+    }
+
+    @Override
     public Optional<Film> putLikeToFilm(int filmId, int userId) {
 
         // Мапа для добавления лайка фильму.
@@ -415,7 +447,6 @@ public class FilmDbStorage implements FilmStorage {
         return Optional.empty();
     }
 
-
     @Override
     public List<Film> searchByTitle(String query) {
         String sqlQuery = "SELECT * FROM films " +
@@ -450,8 +481,7 @@ public class FilmDbStorage implements FilmStorage {
         return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs), searchQuery, searchQuery);
     }
 
-
-    // --- начало блока (формирование film) --- данный блок есть в ветке add-most-popular ---
+    // --- начало блока (формирование film)  ---
     private Film makeFilm(ResultSet rs) throws SQLException {
         int id = rs.getInt("film_id");
         String name = rs.getString("name");
@@ -487,7 +517,7 @@ public class FilmDbStorage implements FilmStorage {
 
     public ArrayList<Genre> getFilmGenreByFilmId(int filmId) {
         String sqlQuery = "SELECT * FROM genres WHERE genre_id in " +
-                "(SELECT genre_id FROM FILM_GENRE_CONNECTION WHERE film_id = ?) ORDER BY genre_id DESC ";
+                "(SELECT genre_id FROM FILM_GENRE_CONNECTION WHERE film_id = ?) ORDER BY genre_id ASC ";
         SqlRowSet genresRows = jdbcTemplate.queryForRowSet(sqlQuery, filmId);
         ArrayList<Genre> filmGenres = new ArrayList<>();
         while (genresRows.next()) {
@@ -508,8 +538,7 @@ public class FilmDbStorage implements FilmStorage {
         }
         return likes;
     }
-// --- конец блока --- данный блок есть в ветке add-most-popular ---
-
+    // --- конец блока ---
 
     private Like createLike(SqlRowSet sqlRowSet) {
         if (sqlRowSet.getInt("LIKE_ID") != 0) {
@@ -556,11 +585,4 @@ public class FilmDbStorage implements FilmStorage {
         return jdbcTemplate.queryForList(sqlQuery, Integer.class, directorId);
     }
 
-    //Удалю при следующем push. Дублируется
-    /*
-    @Override
-    public List<Integer> getDirectorsIdByFilmId(int filmId) {
-        String sqlQuery = "select director_id from film_directors where film_id = ? order by director_id";
-        return jdbcTemplate.queryForList(sqlQuery, Integer.class, filmId);
-    }*/
 }
