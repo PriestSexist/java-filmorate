@@ -76,12 +76,15 @@ public class FilmController {
         });
     }
 
-
     @GetMapping("/popular")
     public Collection<Film> getTopFilms(@RequestParam Map<String, String> allParams) {
         return filmService.getTopFilms(allParams);
     }
 
+    @GetMapping("/common")
+    public Collection<Film> getCommonFilms(@RequestParam int userId, @RequestParam int friendId) {
+        return filmService.getCommonFilms(userId, friendId);
+    }
 
     @GetMapping("/director/{directorId}")
     public List<Film> getFilmsByDirectorId(
