@@ -1,12 +1,10 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.FriendShip;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class InMemoryUserStorage implements UserStorage {
@@ -89,6 +87,11 @@ public class InMemoryUserStorage implements UserStorage {
         myFriends.retainAll(otherFriends);
 
         return myFriends;
+    }
+
+    @Override
+    public HashMap<Integer, HashMap<Integer, Film>> getRecommendationFilms(int id) {
+        return null;
     }
 
 }
