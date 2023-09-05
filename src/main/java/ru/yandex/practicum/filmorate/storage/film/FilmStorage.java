@@ -18,5 +18,4 @@ public interface FilmStorage {
 
     Optional<Film> deleteLikeFromFilm(int filmId, int userId);
 
-    Collection<Film> getCommonFilms(int userId, int friendId);
 }

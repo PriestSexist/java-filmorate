@@ -340,16 +340,6 @@ public class FilmDbStorage implements FilmStorage {
         return Optional.empty();
     }
 
-    public List<Film> getCommonFilms(int userId, int friendId) {
-        return getFilms().stream()
-                .filter(film -> containsId(film.getLikes(), userId) && containsId(film.getLikes(), friendId))
-                .collect(Collectors.toList());
-    }
-
-    private boolean containsId(final Set<Like> set, final int userId) {
-        return set.stream().anyMatch(o -> o.getUserId() == userId);
-    }
-
     private Like createLike(SqlRowSet sqlRowSet) {
         if (sqlRowSet.getInt("LIKE_ID") != 0) {
             return new Like(sqlRowSet.getInt("LIKE_ID"),

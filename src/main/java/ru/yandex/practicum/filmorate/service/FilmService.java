@@ -4,12 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Like;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -67,7 +65,8 @@ public class FilmService {
     public Collection<Film> getCommonFilms(int userId, int friendId) {
 
         Comparator<Film> comparator = Comparator.comparing(film -> film.getLikes().size());
-        List<Film> films = filmDbStorage.getCommonFilms(userId, friendId).stream()
+        List<Film> films = filmDbStorage.getFilms().stream()
+                .filter(film -> containsId(film.getLikes(), userId) && containsId(film.getLikes(), friendId))
                 .sorted(comparator.reversed())
                 .collect(Collectors.toList());
 
@@ -80,6 +79,10 @@ public class FilmService {
         }
 
         return films;
+    }
+
+    private boolean containsId(final Set<Like> set, final int userId) {
+        return set.stream().anyMatch(o -> o.getUserId() == userId);
     }
 
 }
