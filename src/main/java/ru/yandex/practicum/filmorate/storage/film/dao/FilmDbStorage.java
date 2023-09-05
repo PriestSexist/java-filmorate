@@ -200,7 +200,9 @@ public class FilmDbStorage implements FilmStorage {
 
                 // Если жанр нашёлся и создался нормально, то я добавляю его фильму
                 if (genre != null) {
-                    film.getGenres().add(genre);
+                    if (!film.getGenres().contains(genre)) {
+                        film.getGenres().add(genre);
+                    }
                 }
 
                 // Если ключа нет в мапе
@@ -220,7 +222,9 @@ public class FilmDbStorage implements FilmStorage {
 
                 // Если жанр нашёлся и создался нормально, то я добавляю его фильму
                 if (genre != null) {
-                    film.getGenres().add(genre);
+                    if (!film.getGenres().contains(genre)) {
+                        film.getGenres().add(genre);
+                    }
                 }
 
                 films.put(film.getId(), film);
@@ -268,7 +272,9 @@ public class FilmDbStorage implements FilmStorage {
 
             // Если жанр нашёлся и создался нормально, то я добавляю его фильму
             if (genre != null) {
-                film.getGenres().add(genre);
+                if (!film.getGenres().contains(genre)) {
+                    film.getGenres().add(genre);
+                }
             }
 
             // Если больше строк нет, то возвращаю то, что есть
@@ -292,7 +298,9 @@ public class FilmDbStorage implements FilmStorage {
 
                 // Если жанр нашёлся и создался нормально, то я добавляю его фильму
                 if (genre != null) {
-                    film.getGenres().add(genre);
+                    if (!film.getGenres().contains(genre)) {
+                        film.getGenres().add(genre);
+                    }
                 }
 
             }
