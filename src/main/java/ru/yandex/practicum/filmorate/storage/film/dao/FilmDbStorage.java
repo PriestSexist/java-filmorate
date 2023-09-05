@@ -123,7 +123,7 @@ public class FilmDbStorage implements FilmStorage {
         }
 
         // Я решил убрать тут лишнюю проверку, так как если бы фильма не было в бд,
-        // то тогда бы countOfUpdatedRows было равно 0 и вернулся бы Optional.empty()
+        // То тогда бы countOfUpdatedRows было равно 0 и вернулся бы Optional.empty()
         // Фильм из бд
         Film filmInDb = getFilmById(filmId).get();
 
@@ -243,7 +243,9 @@ public class FilmDbStorage implements FilmStorage {
 
                 // Если жанр нашёлся и создался нормально, то я добавляю его фильму
                 if (genre != null) {
-                    film.getGenres().add(genre);
+                    if (!film.getGenres().contains(genre)) {
+                        film.getGenres().add(genre);
+                    }
                 }
 
                 if (director != null) {
@@ -268,7 +270,9 @@ public class FilmDbStorage implements FilmStorage {
 
                 // Если жанр нашёлся и создался нормально, то я добавляю его фильму
                 if (genre != null) {
-                    film.getGenres().add(genre);
+                    if (!film.getGenres().contains(genre)) {
+                        film.getGenres().add(genre);
+                    }
                 }
 
                 if (director != null) {
@@ -326,7 +330,9 @@ public class FilmDbStorage implements FilmStorage {
 
             // Если жанр нашёлся и создался нормально, то я добавляю его фильму
             if (genre != null) {
-                film.getGenres().add(genre);
+                if (!film.getGenres().contains(genre)) {
+                    film.getGenres().add(genre);
+                }
             }
 
             if (director != null) {
@@ -355,7 +361,9 @@ public class FilmDbStorage implements FilmStorage {
 
                 // Если жанр нашёлся и создался нормально, то я добавляю его фильму
                 if (genre != null) {
-                    film.getGenres().add(genre);
+                    if (!film.getGenres().contains(genre)) {
+                        film.getGenres().add(genre);
+                    }
                 }
 
                 if (director != null) {
