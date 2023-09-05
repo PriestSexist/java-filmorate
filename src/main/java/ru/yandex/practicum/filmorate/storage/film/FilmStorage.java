@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.storage.film;
 
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -22,16 +21,15 @@ public interface FilmStorage {
 
     List<Integer> getFilmsIdByDirectorId(int id);
 
-    //Удалю при следующем push. Дублируется
-    //   List<Integer> getDirectorsIdByFilmId(int filmId);
-
     List<Film> searchByTitle(String query);
 
     List<Film> searchByDirector(String query);
 
     List<Film> searchByTitleByDirector(String query);
 
-    List<Film> getPopularByGenreByYear (int count, int genreId, int year);
-    List<Film> getPopularByYear (int count, int year);
-    List<Film> getPopularByGenre (int count, int genreId);
+    List<Film> getPopularByGenreByYear(int count, int genreId, int year);
+
+    List<Film> getPopularByYear(int count, int year);
+
+    List<Film> getPopularByGenre(int count, int genreId);
 }

@@ -400,48 +400,6 @@ public class FilmDbStorage implements FilmStorage {
         return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs), year, genreId, count);
     }
 
-    private Film makeFilm(ResultSet rs) throws SQLException {
-        int id = rs.getInt("film_id");
-        String name = rs.getString("name");
-        String description = rs.getString("description");
-        LocalDate releaseDate = rs.getDate("release_date").toLocalDate();
-        int duration = rs.getInt("duration");
-        int mpaId = rs.getInt("mpa_id");
-        Mpa mpa = mpaStorage.getMpaById(mpaId).get();
-        ArrayList<Genre> genres = getFilmGenreByFilmId(id);
-        HashSet<Like> likes = getLikes(id);
-        Film film = Film.builder().name(name).description(description).releaseDate(releaseDate).duration(duration)
-                .mpa(mpa).build();
-        film.getGenres().addAll(genres);
-        film.getLikes().addAll(likes);
-        film.setId(id);
-        return film;
-    }
-
-    public ArrayList<Genre> getFilmGenreByFilmId(int filmId) {
-        SqlRowSet genresRows = jdbcTemplate.queryForRowSet("select * from genres where genre_id in " +
-                "(select genre_id from FILM_GENRE_CONNECTION where film_id = ?) order by genre_id asc ", filmId);
-        ArrayList<Genre> filmGenres = new ArrayList<>();
-        while (genresRows.next()) {
-            Genre genreFilm = new Genre(genresRows.getInt("genre_id"),
-                    genresRows.getString("name"));
-            filmGenres.add(genreFilm);
-        }
-        return filmGenres;
-    }
-
-    public HashSet<Like> getLikes(int filmId) {
-        String sqlQuery = "SELECT * FROM likes WHERE film_id = ?";
-        SqlRowSet likesRows = jdbcTemplate.queryForRowSet(sqlQuery, filmId);
-        HashSet<Like> likes = new HashSet<>();
-        while (likesRows.next()) {
-            Like like = createLike(likesRows);
-            likes.add(like);
-        }
-        return likes;
-    }
-
-
     @Override
     public Optional<Film> putLikeToFilm(int filmId, int userId) {
 
@@ -516,8 +474,7 @@ public class FilmDbStorage implements FilmStorage {
         return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs), searchQuery, searchQuery);
     }
 
-
-    // --- начало блока (формирование film) --- данный блок есть в ветке add-most-popular ---
+    // --- начало блока (формирование film)  ---
     private Film makeFilm(ResultSet rs) throws SQLException {
         int id = rs.getInt("film_id");
         String name = rs.getString("name");
@@ -553,7 +510,7 @@ public class FilmDbStorage implements FilmStorage {
 
     public ArrayList<Genre> getFilmGenreByFilmId(int filmId) {
         String sqlQuery = "SELECT * FROM genres WHERE genre_id in " +
-                "(SELECT genre_id FROM FILM_GENRE_CONNECTION WHERE film_id = ?) ORDER BY genre_id DESC ";
+                "(SELECT genre_id FROM FILM_GENRE_CONNECTION WHERE film_id = ?) ORDER BY genre_id ASC ";
         SqlRowSet genresRows = jdbcTemplate.queryForRowSet(sqlQuery, filmId);
         ArrayList<Genre> filmGenres = new ArrayList<>();
         while (genresRows.next()) {
@@ -574,8 +531,7 @@ public class FilmDbStorage implements FilmStorage {
         }
         return likes;
     }
-// --- конец блока --- данный блок есть в ветке add-most-popular ---
-
+    // --- конец блока ---
 
     private Like createLike(SqlRowSet sqlRowSet) {
         if (sqlRowSet.getInt("LIKE_ID") != 0) {
@@ -622,11 +578,4 @@ public class FilmDbStorage implements FilmStorage {
         return jdbcTemplate.queryForList(sqlQuery, Integer.class, directorId);
     }
 
-    //Удалю при следующем push. Дублируется
-    /*
-    @Override
-    public List<Integer> getDirectorsIdByFilmId(int filmId) {
-        String sqlQuery = "select director_id from film_directors where film_id = ? order by director_id";
-        return jdbcTemplate.queryForList(sqlQuery, Integer.class, filmId);
-    }*/
 }

@@ -7,8 +7,6 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
-import java.time.LocalDate;
-import java.util.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -65,7 +63,7 @@ public class FilmService {
         if (allParams.containsKey("count")){
             count = Integer.parseInt(allParams.get("count"));
         }else {
-            count = 1;
+            count = 10;
         }
         if (!allParams.containsKey("year") && !allParams.containsKey("genreId")) {
             Comparator<Film> comparator = Comparator.comparing(film -> film.getLikes().size());
@@ -122,14 +120,14 @@ public class FilmService {
 
 
     public List<Film> searchByTitleByDirector(String query, List<String> by) {
-        List<Film> searchFimls = new ArrayList<>();
+        List<Film> searchFilms = new ArrayList<>();
         if (by.contains("title") && by.contains("director")) {
-            searchFimls = filmDbStorage.searchByTitleByDirector(query);
+            searchFilms = filmDbStorage.searchByTitleByDirector(query);
         } else if (by.contains("title")) {
-            searchFimls = filmDbStorage.searchByTitle(query);
+            searchFilms = filmDbStorage.searchByTitle(query);
         } else if (by.contains("director")) {
-            searchFimls = filmDbStorage.searchByDirector(query);
+            searchFilms = filmDbStorage.searchByDirector(query);
         }
-        return searchFimls;
+        return searchFilms;
     }
 }

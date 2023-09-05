@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.storage.film;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Like;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -66,11 +65,6 @@ public class InMemoryFilmStorage implements FilmStorage {
         return null;
     }
 
-    //Удалю при следующем push. Дублируется
- /*   @Override
-    public List<Integer> getDirectorsIdByFilmId(int filmId) {
-        return null;
-    }*/
 
     @Override
     public List<Film> searchByTitle(String query) {
@@ -88,14 +82,15 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getPopularByGenreByYear (int count, int genreId, int year){
+    public List<Film> getPopularByGenreByYear(int count, int genreId, int year) {
         return null;
     }
 
-    public List<Film> getPopularByYear (int count, int year){
+    public List<Film> getPopularByYear(int count, int year) {
         return null;
     }
-    public List<Film> getPopularByGenre (int count, int genreId){
+
+    public List<Film> getPopularByGenre(int count, int genreId) {
         return null;
     }
 

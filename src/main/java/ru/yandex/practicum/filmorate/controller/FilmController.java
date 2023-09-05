@@ -1,15 +1,12 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.film.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.exception.film.InvalidReleaseDateException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
@@ -81,28 +78,9 @@ public class FilmController {
 
 
     @GetMapping("/popular")
-    public Collection<Film> getTopFilms(@RequestParam  Map<String, String> allParams){
-        //    @RequestParam(required = false)
-        //  @DateTimeFormat(pattern = "yyyy") LocalDate year ) {
+    public Collection<Film> getTopFilms(@RequestParam Map<String, String> allParams) {
         return filmService.getTopFilms(allParams);
     }
-
-
-   /* @GetMapping("/popular")
-    public Collection<Film> getTopFilms(@RequestParam(defaultValue = "10") int count,
-                                        @RequestParam (required = false) int genreId,
-                                        @RequestParam (required = false) int year){
-                                    //    @RequestParam(required = false)
-                                      //  @DateTimeFormat(pattern = "yyyy") LocalDate year ) {
-        return filmService.getTopFilms(count, genreId, year);
-    }*/
-
-/*    @GetMapping("/popular")  //  GET /films/popular?count={limit}&genreId={genreId}&year={year}
-    public Collection<Film> getPopularByGenreByYear(@RequestParam(defaultValue = "10") int count,
-                                                    @RequestParam int genreId,
-                                                    @DateTimeFormat(pattern = "yyyy") LocalDate year ) {
-        return filmService.getPopularByGenreByYear(count, genreId, year);
-    }*/
 
 
     @GetMapping("/director/{directorId}")
