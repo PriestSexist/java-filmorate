@@ -80,6 +80,19 @@ public class FilmController {
         return filmService.getTopFilms(count);
     }
 
+    @GetMapping("/director/{directorId}")
+    public List<Film> getFilmsByDirectorId(
+            @PathVariable int directorId,
+            @RequestParam(value = "sortBy", defaultValue = "likes") String sort) {
+        // GET /films/director/{directorId}?sortBy=[year,likes]
+
+        log.info("Вызван GET запрос для получения списка фильмов по режиссеру.");
+        log.debug("Передан идентификатор режисера {},", directorId);
+
+
+        return filmService.getFilmsByDirectorId(directorId, sort);
+    }
+
     @GetMapping("/search")
     public List<Film> searchByTitleByDirector(@RequestParam String query,
                                               @RequestParam List<String> by) {
