@@ -4,22 +4,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Like;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class FilmService {
 
     private final FilmStorage filmDbStorage;
+    private final DirectorStorage directorStorage;
 
     @Autowired
-    public FilmService(FilmStorage filmDbStorage) {
+    public FilmService(FilmStorage filmDbStorage, DirectorStorage directorStorage) {
         this.filmDbStorage = filmDbStorage;
+        this.directorStorage = directorStorage;
     }
 
     public Optional<Film> postFilm(Film film) {
@@ -56,12 +57,86 @@ public class FilmService {
         return filmDbStorage.deleteLikeFromFilm(filmId, userId);
     }
 
-    public List<Film> getTopFilms(int count) {
+    public List<Film> getTopFilms(Map<String, String> allParams) {
+        List<Film> topFilms = new ArrayList<>();
+        int count;
+        if (allParams.containsKey("count")) {
+            count = Integer.parseInt(allParams.get("count"));
+        } else {
+            count = 10;
+        }
+        if (!allParams.containsKey("year") && !allParams.containsKey("genreId")) {
+            Comparator<Film> comparator = Comparator.comparing(film -> film.getLikes().size());
+            topFilms = getFilms().stream()
+                    .sorted(comparator.reversed())
+                    .limit(count)
+                    .collect(Collectors.toList());
+        } else if (allParams.containsKey("genreId") && allParams.containsKey("year")) {
+            int genreId = Integer.parseInt(allParams.get("genreId"));
+            int year = Integer.parseInt(allParams.get("year"));
+            topFilms = filmDbStorage.getPopularByGenreByYear(count, genreId, year);
+        } else if (allParams.containsKey("genreId")) {
+            int genreId = Integer.parseInt(allParams.get("genreId"));
+            topFilms = filmDbStorage.getPopularByGenre(count, genreId);
+        } else if (allParams.containsKey("year")) {
+            int year = Integer.parseInt(allParams.get("year"));
+            topFilms = filmDbStorage.getPopularByYear(count, year);
+        }
+        return topFilms;
+    }
+
+    public Collection<Film> getCommonFilms(int userId, int friendId) {
+
         Comparator<Film> comparator = Comparator.comparing(film -> film.getLikes().size());
-        return getFilms().stream()
+
+        return filmDbStorage.getFilms().stream()
+                .filter(film -> containsId(film.getLikes(), userId) && containsId(film.getLikes(), friendId))
                 .sorted(comparator.reversed())
-                .limit(count)
                 .collect(Collectors.toList());
     }
 
+    private boolean containsId(final Set<Like> set, final int userId) {
+        return set.stream().anyMatch(o -> o.getUserId() == userId);
+    }
+
+    public Film getFilm(int directorId) {
+        return filmDbStorage.getFilmById(directorId).orElse(null);
+    }
+
+    public List<Film> getFilmsByDirectorId(int id, String sort) {
+        if (!(sort.equals("likes") || sort.equals("year"))) {
+            throw new IllegalArgumentException("неизвестная сортировка " + sort + ". Варианты: [likes, year]");
+        }
+
+        if (directorStorage.isDirectorPresent(id)) {
+            List<Film> films = filmDbStorage.getFilmsIdByDirectorId(id).stream()
+                    .map(this::getFilm)
+                    .collect(Collectors.toList());
+
+            if (sort.equals("likes")) {
+                Comparator<Film> comparator = Comparator.comparing(film -> film.getLikes().size());
+                return films.stream()
+                        .sorted(comparator.reversed())
+                        .collect(Collectors.toList());
+            } else {
+                return films.stream()
+                        .sorted(Comparator.comparing(Film::getReleaseDate))
+                        .collect(Collectors.toList());
+            }
+        }
+        return Collections.emptyList();
+    }
+
+
+    public List<Film> searchByTitleByDirector(String query, List<String> by) {
+        List<Film> searchFilms = new ArrayList<>();
+        if (by.contains("title") && by.contains("director")) {
+            searchFilms = filmDbStorage.searchByTitleByDirector(query);
+        } else if (by.contains("title")) {
+            searchFilms = filmDbStorage.searchByTitle(query);
+        } else if (by.contains("director")) {
+            searchFilms = filmDbStorage.searchByDirector(query);
+        }
+        return searchFilms;
+    }
 }
