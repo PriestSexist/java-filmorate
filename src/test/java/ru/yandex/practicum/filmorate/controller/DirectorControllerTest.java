@@ -25,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class DirectorControllerTest {
     @Autowired
     private MockMvc mockMvc;
+
     @Autowired
     DirectorController directorController;
     ObjectMapper mapper = new ObjectMapper();
