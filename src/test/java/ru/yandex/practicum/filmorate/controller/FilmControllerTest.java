@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @AutoConfigureTestDatabase
@@ -211,5 +212,22 @@ class FilmControllerTest {
                 .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("genres", genres))
                 .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("likes", likes));
 
+    }
+
+    @Test
+    public void testDeleteFilm() {
+        Mpa mpa = new Mpa(5, "NC-17");
+        Genre genre = new Genre(6, "Боевик");
+        Film filmForPost = new Film(10, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
+        ArrayList<Genre> genres = new ArrayList<>();
+
+        filmForPost.getGenres().add(genre);
+        genres.add(genre);
+
+        filmStorage.postFilm(filmForPost);
+
+        filmStorage.deleteFilm(filmForPost.getId());
+
+        assertEquals(filmStorage.getFilms().size(), 0);
     }
 }

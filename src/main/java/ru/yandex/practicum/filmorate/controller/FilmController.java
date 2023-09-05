@@ -81,7 +81,6 @@ public class FilmController {
         return filmService.getTopFilms(count);
     }
 
-
     @DeleteMapping("/{filmId}")
     public void deleteFilm(@PathVariable int filmId) {
         Optional<Film> optionalFilm = filmService.getFilmById(filmId);

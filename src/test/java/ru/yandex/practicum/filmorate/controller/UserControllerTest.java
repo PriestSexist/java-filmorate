@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @AutoConfigureTestDatabase
@@ -214,4 +215,13 @@ class UserControllerTest {
 
     }
 
+    @Test
+    public void testDeleteUser() {
+        User userForPost1 = new User(1, "vitekb650@gmaill.com", "PriestSexist", "Viktor", LocalDate.of(2002, 10, 22));
+        userStorage.postUser(userForPost1);
+
+        userStorage.deleteUser(userForPost1.getId());
+
+        assertEquals(userStorage.getUsers().size(), 0);
+    }
 }

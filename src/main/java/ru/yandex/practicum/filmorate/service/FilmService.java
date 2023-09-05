@@ -64,7 +64,7 @@ public class FilmService {
                 .sorted(comparator.reversed())
                 .limit(count)
                 .collect(Collectors.toList());
-        for (Film film : films) {          // !!!!!!!!!!!!!
+        for (Film film : films) {          // !
             if (film.getGenres() != null) {
                 List<Genre> uniqGenres = film.getGenres().stream().distinct().collect(Collectors.toList());
                 film.getGenres().clear();
@@ -73,7 +73,6 @@ public class FilmService {
         }
         return films;
     }
-
 
     public void deleteFilm(int filmId) {
         filmDbStorage.deleteFilm(filmId);

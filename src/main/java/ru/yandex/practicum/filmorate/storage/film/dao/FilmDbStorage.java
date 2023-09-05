@@ -133,7 +133,7 @@ public class FilmDbStorage implements FilmStorage {
             }
             jdbcTemplate.batchUpdate(sqlQueryInsertForLikes, likes);
         }
-// это put метод
+
         // Проверяю, есть ли разница в жанрах фильма из бд и жанрах фильма, который передали нам для замены
         if (!filmInDb.getGenres().containsAll(film.getGenres()) || !film.getGenres().containsAll(filmInDb.getGenres())) {
 
@@ -359,7 +359,7 @@ public class FilmDbStorage implements FilmStorage {
         return null;
     }
 
-    private Film createFilm(SqlRowSet sqlRowSet) {        // !!
+    private Film createFilm(SqlRowSet sqlRowSet) {
         return new Film(sqlRowSet.getInt("FILM_ID"),
                 sqlRowSet.getString("NAME"),
                 sqlRowSet.getString("DESCRIPTION"),
