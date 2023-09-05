@@ -62,6 +62,32 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
+    public List<Integer> getFilmsIdByDirectorId(int id) {
+        return null;
+    }
+
+    //Удалю при следующем push. Дублируется
+ /*   @Override
+    public List<Integer> getDirectorsIdByFilmId(int filmId) {
+        return null;
+    }*/
+
+    @Override
+    public List<Film> searchByTitle(String query) {
+        return null;
+    }
+
+    @Override
+    public List<Film> searchByDirector(String query) {
+        return null;
+    }
+
+    @Override
+    public List<Film> searchByTitleByDirector(String query) {
+        return null;
+    }
+
+    @Override
     public List<Film> getPopularByGenreByYear (int count, int genreId, int year){
         return null;
     }

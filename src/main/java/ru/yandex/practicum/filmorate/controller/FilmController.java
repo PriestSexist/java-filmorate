@@ -15,6 +15,7 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -103,5 +104,24 @@ public class FilmController {
         return filmService.getPopularByGenreByYear(count, genreId, year);
     }*/
 
+
+    @GetMapping("/director/{directorId}")
+    public List<Film> getFilmsByDirectorId(
+            @PathVariable int directorId,
+            @RequestParam(value = "sortBy", defaultValue = "likes") String sort) {
+        // GET /films/director/{directorId}?sortBy=[year,likes]
+
+        log.info("Вызван GET запрос для получения списка фильмов по режиссеру.");
+        log.debug("Передан идентификатор режисера {},", directorId);
+
+
+        return filmService.getFilmsByDirectorId(directorId, sort);
+    }
+
+    @GetMapping("/search")
+    public List<Film> searchByTitleByDirector(@RequestParam String query,
+                                              @RequestParam List<String> by) {
+        return filmService.searchByTitleByDirector(query, by);
+    }
 
 }

@@ -20,6 +20,17 @@ public interface FilmStorage {
 
     Optional<Film> deleteLikeFromFilm(int filmId, int userId);
 
+    List<Integer> getFilmsIdByDirectorId(int id);
+
+    //Удалю при следующем push. Дублируется
+    //   List<Integer> getDirectorsIdByFilmId(int filmId);
+
+    List<Film> searchByTitle(String query);
+
+    List<Film> searchByDirector(String query);
+
+    List<Film> searchByTitleByDirector(String query);
+
     List<Film> getPopularByGenreByYear (int count, int genreId, int year);
     List<Film> getPopularByYear (int count, int year);
     List<Film> getPopularByGenre (int count, int genreId);
