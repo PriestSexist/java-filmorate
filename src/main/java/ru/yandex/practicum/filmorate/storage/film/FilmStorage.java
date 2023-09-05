@@ -21,7 +21,8 @@ public interface FilmStorage {
 
     List<Integer> getFilmsIdByDirectorId(int id);
 
-    List<Integer> getDirectorsIdByFilmId(int filmId);
+    //Удалю при следующем push. Дублируется
+    //   List<Integer> getDirectorsIdByFilmId(int filmId);
 
     List<Film> searchByTitle(String query);
 

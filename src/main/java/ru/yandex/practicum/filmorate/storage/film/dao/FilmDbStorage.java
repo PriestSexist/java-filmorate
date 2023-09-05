@@ -422,10 +422,9 @@ public class FilmDbStorage implements FilmStorage {
     public List<Film> searchByDirector(String query) {
         String sqlQuery = "SELECT * FROM films " +
                 "LEFT JOIN likes ON films.film_id = likes.film_id " +
-                //добавить Таблицу DIRECTOR
-                // "LEFT JOIN film_directors ON films.film_id = film_directors.film_id " +
-                // "LEFT JOIN directors ON film_directors.director_id = directors.director_id " +
-                "WHERE LOWER(directors.name) LIKE LOWER(?) " +   // проверить поле директор
+                "LEFT JOIN film_directors ON films.film_id = film_directors.film_id " +
+                "LEFT JOIN directors ON film_directors.director_id = directors.director_id " +
+                "WHERE LOWER(directors.name) LIKE LOWER(?) " +
                 "GROUP BY films.film_id ORDER BY COUNT(likes.user_id) DESC ";
         String searchQuery = "%" + query + "%";
         return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs), searchQuery);
@@ -435,13 +434,12 @@ public class FilmDbStorage implements FilmStorage {
     public List<Film> searchByTitleByDirector(String query) {
         String sqlQuery = "SELECT * FROM films " +
                 "LEFT JOIN likes ON films.film_id = likes.film_id " +
-                //добавить Таблицу DIRECTOR
-                // "LEFT JOIN film_directors ON films.film_id = film_directors.film_id " +
-                // "LEFT JOIN directors ON film_directors.director_id = directors.director_id " +
-                "WHERE LOWER(films.name) LIKE LOWER(?) OR LOWER(directors.name) LIKE LOWER(?)" +  // проверить поле директор
+                "LEFT JOIN film_directors ON films.film_id = film_directors.film_id " +
+                "LEFT JOIN directors ON film_directors.director_id = directors.director_id " +
+                "WHERE LOWER(films.name) LIKE LOWER(?) OR LOWER(directors.name) LIKE LOWER(?)" +
                 "GROUP BY films.film_id ORDER BY COUNT(likes.user_id) DESC ";
         String searchQuery = "%" + query + "%";
-        return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs), searchQuery);
+        return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs), searchQuery, searchQuery);
     }
 
 
@@ -456,19 +454,16 @@ public class FilmDbStorage implements FilmStorage {
         Mpa mpa = mpaStorage.getMpaById(mpaId).get();
         ArrayList<Genre> genres = getFilmGenreByFilmId(id);
         HashSet<Like> likes = getLikes(id);
-        //добавить директора
-        // List<Director>directors = getDirectorsByFilmId(id);
+        List<Director> directors = getDirectorsByFilmId(id);
         Film film = Film.builder().name(name).description(description).releaseDate(releaseDate).duration(duration)
                 .mpa(mpa).build();
         film.getGenres().addAll(genres);
         film.getLikes().addAll(likes);
-        //film.getDirectors().addAll(directors);
+        film.getDirectors().addAll(directors);
         film.setId(id);
         return film;
     }
 
-    //проверить директоров
-    /*
     public List<Director> getDirectorsByFilmId(int filmId) {
         String sqlQuery = "SELECT * FROM directors WHERE director_id IN " +
                 "(SELECT director_id FROM film_directors WHERE film_id = ?) ORDER BY directors.name DESC ";
@@ -480,7 +475,7 @@ public class FilmDbStorage implements FilmStorage {
             filmDirectors.add(directorFilm);
         }
         return filmDirectors;
-    }*/
+    }
 
     public ArrayList<Genre> getFilmGenreByFilmId(int filmId) {
         String sqlQuery = "SELECT * FROM genres WHERE genre_id in " +
@@ -553,9 +548,11 @@ public class FilmDbStorage implements FilmStorage {
         return jdbcTemplate.queryForList(sqlQuery, Integer.class, directorId);
     }
 
+    //Удалю при следующем push. Дублируется
+    /*
     @Override
     public List<Integer> getDirectorsIdByFilmId(int filmId) {
         String sqlQuery = "select director_id from film_directors where film_id = ? order by director_id";
         return jdbcTemplate.queryForList(sqlQuery, Integer.class, filmId);
-    }
+    }*/
 }

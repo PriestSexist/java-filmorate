@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.util.*;
@@ -16,8 +17,9 @@ public class FilmService {
     private final DirectorStorage directorStorage;
 
     @Autowired
-    public FilmService(FilmStorage filmDbStorage) {
+    public FilmService(FilmStorage filmDbStorage, DirectorStorage directorStorage) {
         this.filmDbStorage = filmDbStorage;
+        this.directorStorage = directorStorage;
     }
 
     public Optional<Film> postFilm(Film film) {
