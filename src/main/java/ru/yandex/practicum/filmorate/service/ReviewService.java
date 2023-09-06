@@ -22,27 +22,6 @@ public class ReviewService {
     private final ReviewStorage reviewStorage;
     private final UserService userService;
     private final FilmService filmService;
-
-    @Autowired
-    public ReviewService(ReviewStorage reviewStorage, UserService userService, FilmService filmService) {
-        this.reviewStorage = reviewStorage;
-        this.userService = userService;
-        this.filmService = filmService;
-    }
-
-    public Optional<Review> postReview(Review review) {
-        checkUserId(review.getUserId()); /*если не проверять id тут, а просто отлавливать ошибки в ReviewDbStorage,
-        то id генерируются с  gap, по тестам это получается 1, 4, 5*/
-        checkFilmId(review.getFilmId());
-        return reviewStorage.postReview(review);
-    }
-
-    public Optional<Review> updateReview(Review review) {
-        return reviewStorage.updateReview(review);
-    }
-
-    public void deleteReview(int reviewId) {
-        reviewStorage.deleteReview(reviewId);
     private final EventService eventService;
 
     @Autowired
@@ -52,6 +31,7 @@ public class ReviewService {
         this.filmService = filmService;
         this.eventService = eventService;
     }
+
 
     public Optional<Review> postReview(Review review) {
         checkUserId(review.getUserId()); //проверяю тут, чтобы не генерировались лишние id при ошибке создания review

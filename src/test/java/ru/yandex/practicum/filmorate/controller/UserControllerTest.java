@@ -35,7 +35,6 @@ class UserControllerTest {
 
     private final EventDbStorage eventDbStorage;
 
-    private final UserService userService;
 
 
     @Test

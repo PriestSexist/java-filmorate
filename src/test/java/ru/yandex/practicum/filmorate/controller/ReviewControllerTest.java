@@ -33,7 +33,7 @@ public class ReviewControllerTest {
     private final ReviewDbStorage reviewStorage;
     private final UserDbStorage userStorage;
     private final FilmDbStorage filmStorage;
-<<<<<<< HEAD
+
     private final EventDbStorage eventDbStorage;
 
     private final UserService userService;
@@ -41,8 +41,7 @@ public class ReviewControllerTest {
     private final FilmService filmService;
 
     private final ReviewService reviewService;
-=======
->>>>>>> origin/develop
+
 
     private Film getTestFilm() {
         Mpa mpa = new Mpa(5, "NC-17");

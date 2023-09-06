@@ -35,6 +35,10 @@ class FilmControllerTest {
     private final UserDbStorage userStorage;
     private final DirectorDbStorage directorStorage;
 
+    private final UserService userService;
+
+    private final EventDbStorage eventDbStorage;
+
     @Test
     public void testPostFilm() {
         Mpa mpa = new Mpa(5, "NC-17");
