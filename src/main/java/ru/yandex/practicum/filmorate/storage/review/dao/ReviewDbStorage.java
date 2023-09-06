@@ -76,7 +76,7 @@ public class ReviewDbStorage implements ReviewStorage {
         try {
             review = Optional.ofNullable(jdbcTemplate.queryForObject(sql, this::reviewFromSql, reviewId));
         } catch (EmptyResultDataAccessException e) {
-           return Optional.empty();
+            return Optional.empty();
         }
         return review;
     }

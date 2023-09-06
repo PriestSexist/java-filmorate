@@ -13,9 +13,9 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.Optional;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/films")
@@ -106,6 +106,7 @@ public class FilmController {
                                               @RequestParam List<String> by) {
         return filmService.searchByTitleByDirector(query, by);
     }
+
     @DeleteMapping("/{filmId}")
     public void deleteFilm(@PathVariable int filmId) {
         Optional<Film> optionalFilm = filmService.getFilmById(filmId);

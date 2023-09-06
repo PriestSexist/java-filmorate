@@ -13,7 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import ru.yandex.practicum.filmorate.model.Director;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -86,7 +86,7 @@ class DirectorControllerTest {
         String json = mapper.writeValueAsString(director);
 
         mockMvc.perform(post("/directors")
-                        .content(json).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+                .content(json).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 
         MvcResult result = mockMvc.perform(get("/directors/1"))
                 .andExpect(status().isOk()).andReturn();

@@ -117,6 +117,7 @@ public class UserService {
         }
         return filmsForRecommendation;
     }
+
     public void deleteUser(int userId) {
         userDbStorage.deleteUser(userId);
     }

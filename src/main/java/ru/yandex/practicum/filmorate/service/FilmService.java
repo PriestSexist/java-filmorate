@@ -79,6 +79,7 @@ public class FilmService {
                     film.getGenres().clear();
                     film.getGenres().addAll(uniqGenres);
                 }
+            }
         } else if (allParams.containsKey("genreId") && allParams.containsKey("year")) {
             int genreId = Integer.parseInt(allParams.get("genreId"));
             int year = Integer.parseInt(allParams.get("year"));

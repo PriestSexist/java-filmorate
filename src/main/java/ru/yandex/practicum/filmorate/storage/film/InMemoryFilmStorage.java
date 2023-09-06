@@ -94,6 +94,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     public List<Film> getPopularByGenre(int count, int genreId) {
         return null;
     }
+
     @Override
     public void deleteFilm(int filmId) {
         if (!films.contains(filmId)) {
