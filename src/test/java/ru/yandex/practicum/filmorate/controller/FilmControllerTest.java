@@ -10,9 +10,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.event.dao.EventDbStorage;
 import ru.yandex.practicum.filmorate.storage.director.dao.DirectorDbStorage;
-import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.event.dao.EventDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.dao.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.dao.UserDbStorage;
 

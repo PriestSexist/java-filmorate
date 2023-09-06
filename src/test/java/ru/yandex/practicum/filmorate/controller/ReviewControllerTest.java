@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -97,7 +96,7 @@ public class ReviewControllerTest {
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("reviewId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("content", "Bad film"))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("isPositive", false))
-                .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("filmId",1))
+                .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("filmId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("userId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("useful", 0));
     }
@@ -115,7 +114,7 @@ public class ReviewControllerTest {
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("reviewId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("content", "Not very bad film"))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("isPositive", true))
-                .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("filmId",1))
+                .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("filmId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("userId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("useful", 0));
 
@@ -134,7 +133,7 @@ public class ReviewControllerTest {
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("reviewId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("content", "Bad film"))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("isPositive", false))
-                .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("filmId",1))
+                .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("filmId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("userId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("useful", 0));
 
@@ -155,7 +154,7 @@ public class ReviewControllerTest {
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("reviewId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("content", "Bad film"))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("isPositive", false))
-                .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("filmId",1))
+                .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("filmId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("userId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("useful", 0));
     }
@@ -186,7 +185,7 @@ public class ReviewControllerTest {
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("reviewId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("content", "Bad film"))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("isPositive", false))
-                .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("filmId",1))
+                .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("filmId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("userId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("useful", 1));
 
@@ -199,7 +198,7 @@ public class ReviewControllerTest {
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("reviewId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("content", "Bad film"))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("isPositive", false))
-                .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("filmId",1))
+                .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("filmId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("userId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("useful", 0));
     }
@@ -218,7 +217,7 @@ public class ReviewControllerTest {
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("reviewId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("content", "Bad film"))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("isPositive", false))
-                .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("filmId",1))
+                .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("filmId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("userId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("useful", -1));
 
@@ -231,7 +230,7 @@ public class ReviewControllerTest {
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("reviewId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("content", "Bad film"))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("isPositive", false))
-                .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("filmId",1))
+                .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("filmId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("userId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("useful", 0));
     }

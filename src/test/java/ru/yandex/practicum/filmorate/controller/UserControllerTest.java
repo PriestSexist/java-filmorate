@@ -7,12 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.film.dao.FilmDbStorage;
-import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.event.dao.EventDbStorage;
+import ru.yandex.practicum.filmorate.storage.film.dao.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.dao.UserDbStorage;
 
 import java.time.LocalDate;
@@ -34,7 +32,6 @@ class UserControllerTest {
     private final UserService userService;
 
     private final EventDbStorage eventDbStorage;
-
 
 
     @Test
@@ -240,6 +237,7 @@ class UserControllerTest {
 
         Assertions.assertEquals(feed.size(), 2);
     }
+
     @Test
     public void testGetRecommendations() {
         Mpa mpa = new Mpa(5, "NC-17");
