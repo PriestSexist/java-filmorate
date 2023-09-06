@@ -9,8 +9,6 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.Review.ReviewNotFoundException;
 import ru.yandex.practicum.filmorate.exception.user.UserNotFoundException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.Review.ReviewNotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 
@@ -83,7 +81,7 @@ public class ReviewDbStorage implements ReviewStorage {
         try {
             review = Optional.ofNullable(jdbcTemplate.queryForObject(sql, this::reviewFromSql, reviewId));
         } catch (EmptyResultDataAccessException e) {
-           return Optional.empty();
+            return Optional.empty();
         }
         return review;
     }
