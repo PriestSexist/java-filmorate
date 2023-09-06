@@ -7,6 +7,8 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.storage.director.dao.DirectorDbStorage;
+import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.storage.film.dao.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.dao.UserDbStorage;
 
@@ -26,7 +28,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class FilmControllerTest {
 
     private final FilmDbStorage filmStorage;
+    private final FilmService filmService;
     private final UserDbStorage userStorage;
+    private final DirectorDbStorage directorStorage;
 
     @Test
     public void testPostFilm() {
@@ -230,4 +234,189 @@ class FilmControllerTest {
 
         assertEquals(filmStorage.getFilms().size(), 0);
     }
+
+    @Test
+    void testGetCommonFilms() {
+        User user = new User(1, "vitekb650@gmaill.com", "PriestSexist", "Viktor", LocalDate.of(2002, 10, 22));
+        User friend = new User(2, "satori@gmaill.com", "Satori", "Stas", LocalDate.of(1989, 10, 24));
+
+        userStorage.postUser(user);
+        userStorage.postUser(friend);
+
+        Mpa mpa = new Mpa(5, "NC-17");
+        Genre genre = new Genre(6, "Боевик");
+        Film filmForPost = new Film(1, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
+        ArrayList<Genre> genres = new ArrayList<>();
+
+        filmForPost.getGenres().add(genre);
+        genres.add(genre);
+
+        filmStorage.postFilm(filmForPost);
+        filmStorage.putLikeToFilm(filmForPost.getId(), user.getId());
+        filmStorage.putLikeToFilm(filmForPost.getId(), friend.getId());
+
+        List<Film> films = (List<Film>) filmService.getCommonFilms(user.getId(), friend.getId());
+
+        Optional<Film> filmOptional = films.stream().findFirst();
+
+        assertThat(filmOptional)
+                .isPresent()
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("id", 1))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("name", "Viktor B Live"))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("description", "Viktor B hates everyone even you."))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("releaseDate", LocalDate.of(2002, 10, 22)))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("duration", 60))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("mpa", mpa))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("genres", genres));
+    }
+
+    @Test
+    public void testGetTopFilms() {
+        Film film1 = Film.builder()
+                .id(1)
+                .name("movie1")
+                .description("movie1")
+                .releaseDate(LocalDate.of(2001, 01, 01))
+                .duration(121)
+                .mpa(new Mpa(5, "NC-17"))
+                .build();
+        film1.getGenres().add(new Genre(6, "Боевик"));
+        film1.getDirectors().add(directorStorage.createDirector(new Director(1, "Директор1")));
+        filmStorage.postFilm(film1);
+        filmStorage.putLikeToFilm(1, 1);
+
+
+        Film film2 = Film.builder()
+                .id(2)
+                .name("movie2")
+                .description("movie2")
+                .releaseDate(LocalDate.of(2002, 02, 02))
+                .duration(122)
+                .mpa(new Mpa(3, "PG-13"))
+                .build();
+        film2.getGenres().add(new Genre(1, "Комедия"));
+        film2.getDirectors().add(directorStorage.createDirector(new Director(2, "movieДиректор2")));
+        filmStorage.postFilm(film2);
+
+        Film film3 = Film.builder()
+                .id(3)
+                .name("movie3")
+                .description("movie3")
+                .releaseDate(LocalDate.of(2003, 03, 03))
+                .duration(123)
+                .mpa(new Mpa(1, "G"))
+                .build();
+        film3.getGenres().add(new Genre(6, "Боевик"));
+        film3.getDirectors().add(directorStorage.createDirector(new Director(3, "Директор3")));
+        filmStorage.postFilm(film3);
+
+        User user = User.builder()
+                .id(1)
+                .email("one@yandex.ru")
+                .login("one")
+                .name("One")
+                .birthday(LocalDate.of(2001, 01, 01))
+                .build();
+        userStorage.postUser(user);
+
+        List<Film> topFilmsByGenreByYear = filmStorage.getPopularByGenreByYear(3, 6, 2003);
+        assertThat(topFilmsByGenreByYear)
+                .isNotEmpty()
+                .hasSize(1)
+                .containsExactly(filmStorage.getFilmById(film3.getId()).get());
+
+        List<Film> topFilmsByGenre = filmStorage.getPopularByGenre(3, 6);
+        assertThat(topFilmsByGenre)
+                .isNotEmpty()
+                .hasSize(2);
+
+        List<Film> topFilmsByYear = filmStorage.getPopularByYear(3, 2001);
+        assertThat(topFilmsByYear)
+                .isNotEmpty()
+                .hasSize(1)
+                .containsExactly(filmStorage.getFilmById(film1.getId()).get());
+
+    }
+
+
+    @Test
+    public void testSearchByTitleByDirector() {
+        Film film1 = Film.builder()
+                .id(1)
+                .name("movie1")
+                .description("movie1")
+                .releaseDate(LocalDate.of(2001, 01, 01))
+                .duration(121)
+                .mpa(new Mpa(5, "NC-17"))
+                .build();
+        film1.getGenres().add(new Genre(6, "Боевик"));
+        film1.getDirectors().add(directorStorage.createDirector(new Director(1, "Директор1")));
+        filmStorage.postFilm(film1);
+        filmStorage.putLikeToFilm(1, 1);
+
+        Film film2 = Film.builder()
+                .id(2)
+                .name("movie2")
+                .description("movie2")
+                .releaseDate(LocalDate.of(2002, 02, 02))
+                .duration(122)
+                .mpa(new Mpa(3, "PG-13"))
+                .build();
+        film2.getGenres().add(new Genre(1, "Комедия"));
+        film2.getDirectors().add(directorStorage.createDirector(new Director(2, "movieДиректор2")));
+        filmStorage.postFilm(film2);
+
+        Film film3 = Film.builder()
+                .id(3)
+                .name("cinema3")
+                .description("cinema3")
+                .releaseDate(LocalDate.of(2003, 03, 03))
+                .duration(123)
+                .mpa(new Mpa(1, "G"))
+                .build();
+        film3.getGenres().add(new Genre(6, "Боевик"));
+        film3.getDirectors().add(directorStorage.createDirector(new Director(3, "Директор3")));
+        filmStorage.postFilm(film3);
+
+        User user = User.builder()
+                .id(1)
+                .email("one@yandex.ru")
+                .login("one")
+                .name("One")
+                .birthday(LocalDate.of(2001, 01, 01))
+                .build();
+        userStorage.postUser(user);
+
+        List<Film> searchByTitle = filmStorage.searchByTitle("MOv");
+        List<Film> assertList1 = new ArrayList<>();
+        assertList1.add(filmStorage.getFilmById(film1.getId()).get());
+        assertList1.add(filmStorage.getFilmById(film2.getId()).get());
+
+        assertThat(searchByTitle)
+                .isNotEmpty()
+                .hasSize(2)
+                .isEqualTo(assertList1);
+
+
+        List<Film> searchByDirector = filmStorage.searchByDirector("Ректор3");
+        List<Film> assertList2 = new ArrayList<>();
+        assertList2.add(filmStorage.getFilmById(film3.getId()).get());
+
+        assertThat(searchByDirector)
+                .isNotEmpty()
+                .hasSize(1)
+                .isEqualTo(assertList2);
+
+        List<Film> searchByTitleByDirector = filmStorage.searchByTitleByDirector("viE");
+        List<Film> assertList3 = new ArrayList<>();
+        assertList3.add(filmStorage.getFilmById(film1.getId()).get());
+        assertList3.add(filmStorage.getFilmById(film2.getId()).get());
+
+        assertThat(searchByTitleByDirector)
+                .isNotEmpty()
+                .hasSize(2)
+                .isEqualTo(assertList3);
+
+    }
+
 }

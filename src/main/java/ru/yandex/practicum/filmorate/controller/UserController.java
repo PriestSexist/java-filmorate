@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.user.EqualIdentifierException;
 import ru.yandex.practicum.filmorate.exception.user.InvalidLoginException;
 import ru.yandex.practicum.filmorate.exception.user.UserNotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
@@ -122,4 +123,10 @@ public class UserController {
 
         userService.deleteUser(userId);
     }
+
+    @GetMapping("/{id}/recommendations")
+    public Collection<Film> getRecommendationFilms(@PathVariable int id) {
+        return userService.getRecommendationFilms(id);
+    }
+
 }

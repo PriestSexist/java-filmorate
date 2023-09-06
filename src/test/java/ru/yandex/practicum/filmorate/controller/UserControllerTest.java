@@ -6,11 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import ru.yandex.practicum.filmorate.model.FriendShip;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.film.dao.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.dao.UserDbStorage;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -24,7 +26,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class UserControllerTest {
 
+    private final FilmDbStorage filmStorage;
     private final UserDbStorage userStorage;
+    private final UserService userService;
 
     @Test
     public void testPostUser() {
@@ -212,6 +216,47 @@ class UserControllerTest {
                 .hasValueSatisfying(user -> assertThat(user).hasFieldOrPropertyWithValue("login", "Uretc"))
                 .hasValueSatisfying(user -> assertThat(user).hasFieldOrPropertyWithValue("name", "Uriy"))
                 .hasValueSatisfying(user -> assertThat(user).hasFieldOrPropertyWithValue("birthday", LocalDate.of(2000, 9, 18)));
+
+    }
+
+    @Test
+    public void testGetRecommendations() {
+        Mpa mpa = new Mpa(5, "NC-17");
+        Genre genre = new Genre(6, "Боевик");
+        User userForPost1 = new User(1, "vitekb650@gmaill.com", "PriestSexist", "Viktor", LocalDate.of(2002, 10, 22));
+        User userForPost2 = new User(2, "satori@gmaill.com", "Satori", "Stas", LocalDate.of(1989, 10, 24));
+        Film filmForPost1 = new Film(1, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
+        Film filmForPost2 = new Film(2, "Stas Live", "Stas B hates everyone even you.", LocalDate.of(1989, 10, 24), 120, mpa);
+
+        ArrayList<Genre> genres = new ArrayList<>();
+
+        filmForPost1.getGenres().add(genre);
+        filmForPost2.getGenres().add(genre);
+        genres.add(genre);
+
+        filmStorage.postFilm(filmForPost1);
+        filmStorage.postFilm(filmForPost2);
+
+        userStorage.postUser(userForPost1);
+        userStorage.postUser(userForPost2);
+
+        filmStorage.putLikeToFilm(filmForPost1.getId(), userForPost1.getId());
+        filmStorage.putLikeToFilm(filmForPost1.getId(), userForPost2.getId());
+        filmStorage.putLikeToFilm(filmForPost2.getId(), userForPost1.getId());
+
+        HashSet<Film> films = (HashSet<Film>) userService.getRecommendationFilms(userForPost2.getId());
+
+        Optional<Film> filmOptional = films.stream().findFirst();
+
+        assertThat(filmOptional)
+                .isPresent()
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("id", 2))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("name", "Stas Live"))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("description", "Stas B hates everyone even you."))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("releaseDate", LocalDate.of(1989, 10, 24)))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("duration", 120))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("mpa", mpa))
+                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("genres", genres));
 
     }
 
