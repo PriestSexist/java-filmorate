@@ -22,7 +22,9 @@ import java.util.List;
 @Repository
 @AllArgsConstructor
 public class DirectorDbStorage implements DirectorStorage {
-    /** Поле с экземпляром сущности для обвязки над JDBC */
+    /**
+     * Поле с экземпляром сущности для обвязки над JDBC
+     */
     private final JdbcTemplate jdbcTemplate;
 
     @Override
