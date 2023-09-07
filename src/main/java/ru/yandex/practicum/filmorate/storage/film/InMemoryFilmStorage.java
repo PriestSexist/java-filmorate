@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Like;
 
@@ -93,4 +94,13 @@ public class InMemoryFilmStorage implements FilmStorage {
     public List<Film> getPopularByGenre(int count, int genreId) {
         return null;
     }
+
+    @Override
+    public void deleteFilm(int filmId) {
+        if (!films.contains(filmId)) {
+            throw new NotFoundException("Id not found.");
+        }
+        films.remove(filmId);
+    }
+
 }

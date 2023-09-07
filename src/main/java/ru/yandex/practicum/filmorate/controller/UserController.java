@@ -118,6 +118,17 @@ public class UserController {
         return userService.getCommonFriends(id, otherId);
     }
 
+    @DeleteMapping("/{userId}")
+    public void deleteUser(@PathVariable int userId) {
+        Optional<User> optionalUser = userService.getUserById(userId);
+
+        if (optionalUser.isEmpty()) {
+            throw new UserNotFoundException("User not found");
+        }
+
+        userService.deleteUser(userId);
+    }
+
     @GetMapping("/{id}/recommendations")
     public Collection<Film> getRecommendationFilms(@PathVariable int id) {
         return userService.getRecommendationFilms(id);

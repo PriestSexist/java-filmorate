@@ -18,7 +18,7 @@ public class UserService {
     private final EventService eventService;
 
     @Autowired
-    public UserService(UserStorage userDbStorage, EventService eventService) {
+    public UserService(UserStorage userDbStorage, EventService eventService) {   // !!!
         this.userDbStorage = userDbStorage;
         this.eventService = eventService;
     }
@@ -121,5 +121,9 @@ public class UserService {
             filmsForRecommendation.removeAll(userFilms.values());
         }
         return filmsForRecommendation;
+    }
+
+    public void deleteUser(int userId) {
+        userDbStorage.deleteUser(userId);
     }
 }

@@ -26,4 +26,6 @@ public interface UserStorage {
     Collection<User> getCommonFriends(int userId, int otherId);
 
     HashMap<Integer, HashMap<Integer, Film>> getRecommendationFilms(int id);
+
+    void deleteUser(int userId);
 }

@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.director.dao.DirectorDbStorage;
 import ru.yandex.practicum.filmorate.storage.event.dao.EventDbStorage;
+import ru.yandex.practicum.filmorate.storage.director.dao.DirectorDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.dao.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.dao.UserDbStorage;
 
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @AutoConfigureTestDatabase
@@ -248,6 +250,23 @@ class FilmControllerTest {
         List<Event> feed = eventDbStorage.getFeed(filmForPost.getId());
 
         Assertions.assertEquals(feed.size(), 2);
+    }
+
+    @Test
+    public void testDeleteFilm() {
+        Mpa mpa = new Mpa(5, "NC-17");
+        Genre genre = new Genre(6, "Боевик");
+        Film filmForPost = new Film(10, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
+        ArrayList<Genre> genres = new ArrayList<>();
+
+        filmForPost.getGenres().add(genre);
+        genres.add(genre);
+
+        filmStorage.postFilm(filmForPost);
+
+        filmStorage.deleteFilm(filmForPost.getId());
+
+        assertEquals(filmStorage.getFilms().size(), 0);
     }
 
     @Test

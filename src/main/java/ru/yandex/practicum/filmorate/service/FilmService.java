@@ -21,6 +21,7 @@ public class FilmService {
     private final DirectorStorage directorStorage;
     private final EventService eventService;
 
+
     @Autowired
     public FilmService(FilmStorage filmDbStorage, EventService eventService, DirectorStorage directorStorage) {
         this.filmDbStorage = filmDbStorage;
@@ -36,6 +37,7 @@ public class FilmService {
         }
         return filmDbStorage.postFilm(film);
     }
+
 
     public Optional<Film> putFilm(Film film) {
         if (film.getGenres() != null) {
@@ -81,6 +83,13 @@ public class FilmService {
                     .sorted(comparator.reversed())
                     .limit(count)
                     .collect(Collectors.toList());
+            for (Film film : topFilms) {          // !
+                if (film.getGenres() != null) {
+                    List<Genre> uniqGenres = film.getGenres().stream().distinct().collect(Collectors.toList());
+                    film.getGenres().clear();
+                    film.getGenres().addAll(uniqGenres);
+                }
+            }
         } else if (allParams.containsKey("genreId") && allParams.containsKey("year")) {
             int genreId = Integer.parseInt(allParams.get("genreId"));
             int year = Integer.parseInt(allParams.get("year"));
@@ -137,6 +146,9 @@ public class FilmService {
         return Collections.emptyList();
     }
 
+    public void deleteFilm(int filmId) {
+        filmDbStorage.deleteFilm(filmId);
+    }
 
     public List<Film> searchByTitleByDirector(String query, List<String> by) {
         List<Film> searchFilms = new ArrayList<>();

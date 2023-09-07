@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.FriendShip;
 import ru.yandex.practicum.filmorate.model.User;
@@ -87,6 +88,14 @@ public class InMemoryUserStorage implements UserStorage {
         myFriends.retainAll(otherFriends);
 
         return myFriends;
+    }
+
+    @Override
+    public void deleteUser(int userId) {
+        if (!users.contains(userId)) {
+            throw new NotFoundException("Id not found.");
+        }
+        users.remove(userId);
     }
 
     @Override

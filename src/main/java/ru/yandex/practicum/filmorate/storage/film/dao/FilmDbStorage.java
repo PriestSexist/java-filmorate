@@ -72,6 +72,7 @@ public class FilmDbStorage implements FilmStorage {
             for (Genre genre : film.getGenres()) {
                 genres.add(new Object[]{filmId, genre.getId()});
             }
+
             jdbcTemplate.batchUpdate(sqlQueryForGenre, genres);
         }
 
@@ -283,6 +284,7 @@ public class FilmDbStorage implements FilmStorage {
 
             }
         }
+
         return films.values().stream().sorted(Comparator.comparingInt(Film::getId)).collect(Collectors.toList());
     }
 
@@ -582,6 +584,13 @@ public class FilmDbStorage implements FilmStorage {
     public List<Integer> getFilmsIdByDirectorId(int directorId) {
         String sqlQuery = "select film_id from film_directors where director_id = ? order by film_id";
         return jdbcTemplate.queryForList(sqlQuery, Integer.class, directorId);
+    }
+
+    @Override
+    public void deleteFilm(int filmId) {
+        final String sqlQuery = "DELETE FROM FILMS WHERE FILM_ID=?";
+
+        jdbcTemplate.update(sqlQuery, filmId);
     }
 
 }

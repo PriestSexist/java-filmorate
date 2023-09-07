@@ -459,4 +459,11 @@ public class UserDbStorage implements UserStorage {
                 new java.sql.Date(Objects.requireNonNull(sqlRowSet.getDate("BIRTHDAY")).getTime()).toLocalDate());
     }
 
+    @Override
+    public void deleteUser(int userId) {
+        final String sqlQuery = "DELETE FROM USERS WHERE USER_ID=?";
+
+        jdbcTemplate.update(sqlQuery, userId);
+    }
+
 }
