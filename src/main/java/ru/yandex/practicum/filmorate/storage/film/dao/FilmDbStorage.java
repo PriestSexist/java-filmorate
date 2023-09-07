@@ -429,7 +429,6 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Optional<Film> deleteLikeFromFilm(int filmId, int userId) {
-
         // Запрос на удаление лайка
         String sqlQueryForDelete = "DELETE " +
                 "FROM LIKES " +

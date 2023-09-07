@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -8,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.event.dao.EventDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.dao.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.dao.UserDbStorage;
 
@@ -28,6 +30,9 @@ class UserControllerTest {
     private final FilmDbStorage filmStorage;
     private final UserDbStorage userStorage;
     private final UserService userService;
+
+    private final EventDbStorage eventDbStorage;
+
 
     @Test
     public void testPostUser() {
@@ -216,6 +221,21 @@ class UserControllerTest {
                 .hasValueSatisfying(user -> assertThat(user).hasFieldOrPropertyWithValue("name", "Uriy"))
                 .hasValueSatisfying(user -> assertThat(user).hasFieldOrPropertyWithValue("birthday", LocalDate.of(2000, 9, 18)));
 
+    }
+
+    @Test
+    public void testGetFeedUser() {
+        User userForPost1 = new User(1, "vitekb650@gmaill.com", "PriestSexist", "Viktor", LocalDate.of(2002, 10, 22));
+        User friend1 = new User(2, "satori@gmaill.com", "Satori", "Stas", LocalDate.of(1989, 10, 24));
+
+        userService.postUser(userForPost1);
+        userService.postUser(friend1);
+        userService.putUserFriend(userForPost1.getId(), friend1.getId());
+        userService.deleteUserFriend(userForPost1.getId(), friend1.getId());
+
+        List<Event> feed = eventDbStorage.getFeed(userForPost1.getId());
+
+        Assertions.assertEquals(feed.size(), 2);
     }
 
     @Test
