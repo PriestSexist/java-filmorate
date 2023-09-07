@@ -2,7 +2,7 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.user.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Like;
@@ -19,7 +19,6 @@ public class FilmService {
 
     private final FilmStorage filmDbStorage;
     private final DirectorStorage directorStorage;
-
     private final EventService eventService;
 
     @Autowired
@@ -62,7 +61,7 @@ public class FilmService {
 
     public Optional<Film> deleteLikeToFilm(int filmId, int userId) {
         if (userId < 0) {
-            throw new NotFoundException("Не может быть отрицательного id");
+            throw new UserNotFoundException("Не может быть отрицательного id");
         }
         eventService.createEvent(userId, EventType.LIKE, EventOperation.REMOVE, filmId);
         return filmDbStorage.deleteLikeFromFilm(filmId, userId);

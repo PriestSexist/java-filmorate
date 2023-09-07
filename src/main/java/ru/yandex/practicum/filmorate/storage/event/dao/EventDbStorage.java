@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.user.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -30,7 +31,7 @@ public class EventDbStorage implements EventStorage {
     @Override
     public List<Event> getFeed(int userId) {
         if (userStorage.getUserById(userId).isEmpty()) {
-            throw new NotFoundException("Пользователь по " + userId + " id не найден.");
+            throw new UserNotFoundException("Пользователь по " + userId + " id не найден.");
         }
 
         final String sqlQuery = "SELECT EVENT_ID, USER_ID, timestamp, EVENT_TYPE, OPERATION, ENTITY_ID " +
@@ -42,7 +43,7 @@ public class EventDbStorage implements EventStorage {
     @Override
     public void createEvent(Event event) {
         if (event.getEntityId() < 0) {
-            throw new NotFoundException("entityId не может быть отрицательным.");
+            throw new UserNotFoundException("entityId не может быть отрицательным.");
         }
 
         final String sqlQuery = "INSERT INTO FEED " +
