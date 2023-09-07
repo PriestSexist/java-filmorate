@@ -450,7 +450,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> searchByTitle(String query) {
-        String sqlQuery = "SELECT * FROM films " +
+        String sqlQuery = "SELECT FILMS.FILM_ID, FILMS.NAME, FILMS.DESCRIPTION, FILMS.RELEASE_DATE, FILMS.DURATION, FILMS.MPA_ID, LIKES.USER_ID FROM films " +
                 "LEFT JOIN likes ON films.film_id = likes.film_id " +
                 "WHERE LOWER(films.name) LIKE LOWER(?) " +
                 "GROUP BY films.film_id ORDER BY COUNT(likes.user_id) DESC ";
@@ -460,7 +460,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> searchByDirector(String query) {
-        String sqlQuery = "SELECT * FROM films " +
+        String sqlQuery = "SELECT FILMS.FILM_ID, FILMS.NAME, FILMS.DESCRIPTION, FILMS.RELEASE_DATE, FILMS.DURATION, FILMS.MPA_ID, LIKES.USER_ID, DIRECTORS.NAME FROM films " +
                 "LEFT JOIN likes ON films.film_id = likes.film_id " +
                 "LEFT JOIN film_directors ON films.film_id = film_directors.film_id " +
                 "LEFT JOIN directors ON film_directors.director_id = directors.director_id " +
@@ -472,7 +472,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> searchByTitleByDirector(String query) {
-        String sqlQuery = "SELECT * FROM films " +
+        String sqlQuery = "SELECT FILMS.FILM_ID, FILMS.NAME, FILMS.DESCRIPTION, FILMS.RELEASE_DATE, FILMS.DURATION, FILMS.MPA_ID, LIKES.USER_ID, DIRECTORS.NAME FROM films " +
                 "LEFT JOIN likes ON films.film_id = likes.film_id " +
                 "LEFT JOIN film_directors ON films.film_id = film_directors.film_id " +
                 "LEFT JOIN directors ON film_directors.director_id = directors.director_id " +
@@ -518,7 +518,7 @@ public class FilmDbStorage implements FilmStorage {
 
     public ArrayList<Genre> getFilmGenreByFilmId(int filmId) {
         String sqlQuery = "SELECT * FROM genres WHERE genre_id in " +
-                "(SELECT genre_id FROM FILM_GENRE_CONNECTION WHERE film_id = ?) ORDER BY genre_id ASC ";
+                "(SELECT genre_id FROM FILM_GENRE_CONNECTION WHERE film_id = ?) ORDER BY genre_id ";
         SqlRowSet genresRows = jdbcTemplate.queryForRowSet(sqlQuery, filmId);
         ArrayList<Genre> filmGenres = new ArrayList<>();
         while (genresRows.next()) {
