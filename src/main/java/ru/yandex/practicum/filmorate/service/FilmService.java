@@ -57,7 +57,23 @@ public class FilmService {
     }
 
     public Optional<Film> putLikeToFilm(int filmId, int userId) {
+
         eventService.createEvent(userId, EventType.LIKE, EventOperation.ADD, filmId);
+
+        Optional<Film> optionalFilm = getFilmById(filmId);
+
+        if (optionalFilm.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Film film = optionalFilm.get();
+
+        for (Like like : film.getLikes()) {
+            if (like.getUserId() == userId) {
+                return Optional.of(film);
+            }
+        }
+
         return filmDbStorage.putLikeToFilm(filmId, userId);
     }
 
