@@ -2,11 +2,14 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.user.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Like;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.utility.EventOperation;
+import ru.yandex.practicum.filmorate.utility.EventType;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,11 +19,13 @@ public class FilmService {
 
     private final FilmStorage filmDbStorage;
     private final DirectorStorage directorStorage;
+    private final EventService eventService;
 
 
     @Autowired
-    public FilmService(FilmStorage filmDbStorage, DirectorStorage directorStorage) {
+    public FilmService(FilmStorage filmDbStorage, EventService eventService, DirectorStorage directorStorage) {
         this.filmDbStorage = filmDbStorage;
+        this.eventService = eventService;
         this.directorStorage = directorStorage;
     }
 
@@ -52,10 +57,15 @@ public class FilmService {
     }
 
     public Optional<Film> putLikeToFilm(int filmId, int userId) {
+        eventService.createEvent(userId, EventType.LIKE, EventOperation.ADD, filmId);
         return filmDbStorage.putLikeToFilm(filmId, userId);
     }
 
     public Optional<Film> deleteLikeToFilm(int filmId, int userId) {
+        if (userId < 0) {
+            throw new UserNotFoundException("Не может быть отрицательного id");
+        }
+        eventService.createEvent(userId, EventType.LIKE, EventOperation.REMOVE, filmId);
         return filmDbStorage.deleteLikeFromFilm(filmId, userId);
     }
 

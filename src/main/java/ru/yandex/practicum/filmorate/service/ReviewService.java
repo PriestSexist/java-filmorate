@@ -7,6 +7,8 @@ import ru.yandex.practicum.filmorate.exception.film.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.exception.user.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
+import ru.yandex.practicum.filmorate.utility.EventOperation;
+import ru.yandex.practicum.filmorate.utility.EventType;
 
 import java.util.Comparator;
 import java.util.List;
@@ -20,27 +22,35 @@ public class ReviewService {
     private final ReviewStorage reviewStorage;
     private final UserService userService;
     private final FilmService filmService;
+    private final EventService eventService;
 
     @Autowired
-    public ReviewService(ReviewStorage reviewStorage, UserService userService, FilmService filmService) {
+    public ReviewService(ReviewStorage reviewStorage, UserService userService, FilmService filmService, EventService eventService) {
         this.reviewStorage = reviewStorage;
         this.userService = userService;
         this.filmService = filmService;
+        this.eventService = eventService;
     }
 
+
     public Optional<Review> postReview(Review review) {
-        checkUserId(review.getUserId()); /*если не проверять id тут, а просто отлавливать ошибки в ReviewDbStorage,
-        то id генерируются с  gap, по тестам это получается 1, 4, 5*/
+        checkUserId(review.getUserId()); //проверяю тут, чтобы не генерировались лишние id при ошибке создания review
         checkFilmId(review.getFilmId());
-        return reviewStorage.postReview(review);
+        Optional<Review> review1 = reviewStorage.postReview(review);
+        eventService.createEvent(review1.get().getUserId(), EventType.REVIEW, EventOperation.ADD, review1.get().getReviewId());
+        return review1;
     }
 
     public Optional<Review> updateReview(Review review) {
-        return reviewStorage.updateReview(review);
+        Optional<Review> review1 = reviewStorage.updateReview(review);
+        eventService.createEvent(review1.get().getUserId(), EventType.REVIEW, EventOperation.UPDATE, review1.get().getReviewId());
+        return review1;
     }
 
     public void deleteReview(int reviewId) {
+        Optional<Review> review1 = reviewStorage.getReviewById(reviewId);
         reviewStorage.deleteReview(reviewId);
+        eventService.createEvent(review1.get().getUserId(), EventType.REVIEW, EventOperation.REMOVE, review1.get().getReviewId());
     }
 
     public Optional<Review> getReviewById(int reviewId) {

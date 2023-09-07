@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -8,6 +9,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.director.dao.DirectorDbStorage;
+import ru.yandex.practicum.filmorate.storage.event.dao.EventDbStorage;
 import ru.yandex.practicum.filmorate.storage.director.dao.DirectorDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.dao.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.dao.UserDbStorage;
@@ -31,6 +35,10 @@ class FilmControllerTest {
     private final FilmService filmService;
     private final UserDbStorage userStorage;
     private final DirectorDbStorage directorStorage;
+
+    private final UserService userService;
+
+    private final EventDbStorage eventDbStorage;
 
     @Test
     public void testPostFilm() {
@@ -216,6 +224,32 @@ class FilmControllerTest {
                 .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("genres", genres))
                 .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("likes", likes));
 
+    }
+
+    @Test
+    public void testGetFeedFilm() {
+        User userForPost = new User(1, "vitekb650@gmaill.com", "PriestSexist", "Viktor", LocalDate.of(2002, 10, 22));
+
+        Mpa mpa = new Mpa(5, "NC-17");
+        Genre genre = new Genre(6, "Боевик");
+        Like like = new Like(1, 1, 1);
+        Film filmForPost = new Film(1, "Viktor B Live", "Viktor B hates everyone even you.", LocalDate.of(2002, 10, 22), 60, mpa);
+        ArrayList<Genre> genres = new ArrayList<>();
+        HashSet<Like> likes = new HashSet<>();
+
+        filmForPost.getGenres().add(genre);
+        genres.add(genre);
+        likes.add(like);
+
+        filmService.postFilm(filmForPost);
+        userService.postUser(userForPost);
+
+        filmService.putLikeToFilm(filmForPost.getId(), userForPost.getId());
+        filmService.deleteLikeToFilm(filmForPost.getId(), userForPost.getId());
+
+        List<Event> feed = eventDbStorage.getFeed(filmForPost.getId());
+
+        Assertions.assertEquals(feed.size(), 2);
     }
 
     @Test

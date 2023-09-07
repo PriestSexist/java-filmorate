@@ -69,10 +69,10 @@ create table IF NOT EXISTS REVIEWS
         primary key (REVIEW_ID),
     constraint "REVIEWS_FILMS_FILM_ID_fk"
         foreign key (FILM_ID) references FILMS
-            on delete cascade,
+            on delete cascade on update cascade,
     constraint "REVIEWS_USERS_USER_ID_fk"
         foreign key (USER_ID) references USERS
-            on delete cascade
+            on delete cascade on update cascade
 );
 
 create table IF NOT EXISTS REVIEW_RATING
@@ -82,10 +82,10 @@ create table IF NOT EXISTS REVIEW_RATING
     POINTS    INTEGER not null,
     constraint "REVIEW_RATING_REVIEWS_REVIEW_ID_fk"
         foreign key (REVIEW_ID) references REVIEWS
-            on delete cascade,
+            on delete cascade on update cascade,
     constraint "REVIEW_RATING_USERS_USER_ID_fk"
         foreign key (USER_ID) references USERS
-            on delete cascade
+            on delete cascade on update cascade
 );
 
 create table IF NOT EXISTS FRIEND_REQUEST
@@ -135,4 +135,16 @@ CREATE TABLE IF NOT EXISTS FILM_DIRECTORS
     CONSTRAINT FK_FILM_DIRECTORS
         FOREIGN KEY (DIRECTOR_ID) REFERENCES DIRECTORS (DIRECTOR_ID)
             on update cascade on delete cascade
+);
+
+create table if not exists FEED
+(
+    EVENT_ID   INTEGER auto_increment,
+    USER_ID    INTEGER,
+    timestamp  long        not null,
+    EVENT_TYPE varchar(50) not null,
+    OPERATION  varchar(50) not null,
+    ENTITY_ID  INTEGER     not null,
+    foreign key (USER_ID) references USERS (USER_ID) on delete cascade on update cascade,
+    primary key (EVENT_ID)
 );

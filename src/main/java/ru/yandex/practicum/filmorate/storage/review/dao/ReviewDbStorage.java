@@ -23,6 +23,7 @@ public class ReviewDbStorage implements ReviewStorage {
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert simpleJdbcInsertForReviews;
 
+
     @Autowired
     public ReviewDbStorage(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -42,6 +43,7 @@ public class ReviewDbStorage implements ReviewStorage {
         values.put("useful", review.getUseful());
 
         log.debug("Creating review {}", review);
+
         int reviewId = simpleJdbcInsertForReviews.executeAndReturnKey(values).intValue();
 
         review.setReviewId(reviewId);
@@ -59,6 +61,7 @@ public class ReviewDbStorage implements ReviewStorage {
             log.debug("Review with id {} is not found", reviewId);
             return Optional.empty();
         }
+        checkRowsUpdated(jdbcTemplate.update(sql, review.getContent(), review.getIsPositive(), reviewId));
         return getReviewById(reviewId);
     }
 

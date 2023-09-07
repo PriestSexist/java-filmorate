@@ -7,6 +7,10 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.ReviewService;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.event.dao.EventDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.dao.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.review.dao.ReviewDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.dao.UserDbStorage;
@@ -28,6 +32,15 @@ public class ReviewControllerTest {
     private final ReviewDbStorage reviewStorage;
     private final UserDbStorage userStorage;
     private final FilmDbStorage filmStorage;
+
+    private final EventDbStorage eventDbStorage;
+
+    private final UserService userService;
+
+    private final FilmService filmService;
+
+    private final ReviewService reviewService;
+
 
     private Film getTestFilm() {
         Mpa mpa = new Mpa(5, "NC-17");
