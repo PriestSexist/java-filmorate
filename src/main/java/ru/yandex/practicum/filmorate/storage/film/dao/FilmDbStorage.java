@@ -450,34 +450,34 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> searchByTitle(String query) {
-        String sqlQuery = "SELECT FILMS.FILM_ID, FILMS.NAME, FILMS.DESCRIPTION, FILMS.RELEASE_DATE, FILMS.DURATION, FILMS.MPA_ID, LIKES.USER_ID FROM films " +
+        String sqlQuery = "SELECT FILMS.FILM_ID, FILMS.NAME, FILMS.DESCRIPTION, FILMS.RELEASE_DATE, FILMS.DURATION, FILMS.MPA_ID FROM films " +
                 "LEFT JOIN likes ON films.film_id = likes.film_id " +
                 "WHERE LOWER(films.name) LIKE LOWER(?) " +
-                "GROUP BY films.film_id ORDER BY COUNT(likes.user_id) DESC ";
+                "GROUP BY films.film_id ";
         String searchQuery = "%" + query + "%";
         return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs), searchQuery);
     }
 
     @Override
     public List<Film> searchByDirector(String query) {
-        String sqlQuery = "SELECT FILMS.FILM_ID, FILMS.NAME, FILMS.DESCRIPTION, FILMS.RELEASE_DATE, FILMS.DURATION, FILMS.MPA_ID, LIKES.USER_ID, DIRECTORS.NAME FROM films " +
+        String sqlQuery = "SELECT FILMS.FILM_ID, FILMS.NAME, FILMS.DESCRIPTION, FILMS.RELEASE_DATE, FILMS.DURATION, FILMS.MPA_ID, DIRECTORS.NAME FROM films " +
                 "LEFT JOIN likes ON films.film_id = likes.film_id " +
                 "LEFT JOIN film_directors ON films.film_id = film_directors.film_id " +
                 "LEFT JOIN directors ON film_directors.director_id = directors.director_id " +
                 "WHERE LOWER(directors.name) LIKE LOWER(?) " +
-                "GROUP BY films.film_id ORDER BY COUNT(likes.user_id) DESC ";
+                "GROUP BY films.film_id ";
         String searchQuery = "%" + query + "%";
         return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs), searchQuery);
     }
 
     @Override
     public List<Film> searchByTitleByDirector(String query) {
-        String sqlQuery = "SELECT FILMS.FILM_ID, FILMS.NAME, FILMS.DESCRIPTION, FILMS.RELEASE_DATE, FILMS.DURATION, FILMS.MPA_ID, LIKES.USER_ID, DIRECTORS.NAME FROM films " +
+        String sqlQuery = "SELECT FILMS.FILM_ID, FILMS.NAME, FILMS.DESCRIPTION, FILMS.RELEASE_DATE, FILMS.DURATION, FILMS.MPA_ID, DIRECTORS.NAME FROM films " +
                 "LEFT JOIN likes ON films.film_id = likes.film_id " +
                 "LEFT JOIN film_directors ON films.film_id = film_directors.film_id " +
                 "LEFT JOIN directors ON film_directors.director_id = directors.director_id " +
                 "WHERE LOWER(films.name) LIKE LOWER(?) OR LOWER(directors.name) LIKE LOWER(?)" +
-                "GROUP BY films.film_id ORDER BY COUNT(likes.user_id) DESC ";
+                "GROUP BY films.film_id ";
         String searchQuery = "%" + query + "%";
         return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs), searchQuery, searchQuery);
     }

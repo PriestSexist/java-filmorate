@@ -175,6 +175,11 @@ public class FilmService {
         } else if (by.contains("director")) {
             searchFilms = filmDbStorage.searchByDirector(query);
         }
-        return searchFilms;
+
+        Comparator<Film> comparator = Comparator.comparing(film -> film.getLikes().size());
+
+        return searchFilms.stream()
+                .sorted(comparator.reversed())
+                .collect(Collectors.toList());
     }
 }
