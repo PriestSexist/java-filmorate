@@ -63,7 +63,7 @@ public class FilmController {
     }
 
     @PutMapping("/{filmId}/like/{userId}")
-    public Object putLikeToFilm(@PathVariable int filmId, @PathVariable int userId) {
+    public Film putLikeToFilm(@PathVariable int filmId, @PathVariable int userId) {
         return filmService.putLikeToFilm(filmId, userId).orElseThrow(() -> {
             throw new NotFoundException("Film or User not found");
         });

@@ -56,17 +56,17 @@ public class FilmService {
         return filmDbStorage.getFilmById(filmId);
     }
 
-    public Optional<Object> putLikeToFilm(int filmId, int userId) {
+    public Optional<Film> putLikeToFilm(int filmId, int userId) {
         eventService.createEvent(userId, EventType.LIKE, EventOperation.ADD, filmId);
 
         return getFilmById(filmId)
                 .map(film -> {
                     for (Like like : film.getLikes()) {
                         if (like.getUserId() == userId) {
-                            return Optional.of(film);
+                            return film;
                         }
                     }
-                    return filmDbStorage.putLikeToFilm(filmId, userId);
+                    return filmDbStorage.putLikeToFilm(filmId, userId).get();
                 });
     }
 
