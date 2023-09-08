@@ -41,7 +41,7 @@ public class EventDbStorage implements EventStorage {
 
     @Override
     public void createEvent(Event event) {
-        if (event.getEntityId() < 0) {
+        if (event.getEntityId() <= 0) {
             throw new UserNotFoundException("entityId не может быть отрицательным.");
         }
 

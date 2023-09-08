@@ -331,10 +331,8 @@ public class FilmDbStorage implements FilmStorage {
             }
 
             // Если жанр нашёлся и создался нормально, то я добавляю его фильму
-            if (genre != null) {
-                if (!film.getGenres().contains(genre)) {
-                    film.getGenres().add(genre);
-                }
+            if (genre != null && !film.getGenres().contains(genre)) {
+                film.getGenres().add(genre);
             }
 
             if (director != null) {
@@ -587,10 +585,14 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public void deleteFilm(int filmId) {
+    public Optional<Integer> deleteFilm(int filmId) {
         final String sqlQuery = "DELETE FROM FILMS WHERE FILM_ID=?";
 
-        jdbcTemplate.update(sqlQuery, filmId);
+        int deletedRows = jdbcTemplate.update(sqlQuery, filmId);
+        if (deletedRows != 1) {
+            return Optional.empty();
+        }
+        return Optional.of(filmId);
     }
 
 }

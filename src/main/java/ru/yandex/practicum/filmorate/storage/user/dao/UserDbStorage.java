@@ -460,10 +460,14 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public void deleteUser(int userId) {
+    public Optional<Integer> deleteUser(int userId) {
         final String sqlQuery = "DELETE FROM USERS WHERE USER_ID=?";
 
-        jdbcTemplate.update(sqlQuery, userId);
+        int deletedRows = jdbcTemplate.update(sqlQuery, userId);
+        if (deletedRows != 1) {
+            return Optional.empty();
+        }
+        return Optional.of(userId);
     }
 
 }

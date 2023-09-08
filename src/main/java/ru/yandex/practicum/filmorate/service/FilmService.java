@@ -56,29 +56,22 @@ public class FilmService {
         return filmDbStorage.getFilmById(filmId);
     }
 
-    public Optional<Film> putLikeToFilm(int filmId, int userId) {
-
+    public Optional<Object> putLikeToFilm(int filmId, int userId) {
         eventService.createEvent(userId, EventType.LIKE, EventOperation.ADD, filmId);
 
-        Optional<Film> optionalFilm = getFilmById(filmId);
-
-        if (optionalFilm.isEmpty()) {
-            return Optional.empty();
-        }
-
-        Film film = optionalFilm.get();
-
-        for (Like like : film.getLikes()) {
-            if (like.getUserId() == userId) {
-                return Optional.of(film);
-            }
-        }
-
-        return filmDbStorage.putLikeToFilm(filmId, userId);
+        return getFilmById(filmId)
+                .map(film -> {
+                    for (Like like : film.getLikes()) {
+                        if (like.getUserId() == userId) {
+                            return Optional.of(film);
+                        }
+                    }
+                    return filmDbStorage.putLikeToFilm(filmId, userId);
+                });
     }
 
     public Optional<Film> deleteLikeToFilm(int filmId, int userId) {
-        if (userId < 0) {
+        if (userId <= 0) {
             throw new UserNotFoundException("Не может быть отрицательного id");
         }
         eventService.createEvent(userId, EventType.LIKE, EventOperation.REMOVE, filmId);
@@ -162,8 +155,8 @@ public class FilmService {
         return Collections.emptyList();
     }
 
-    public void deleteFilm(int filmId) {
-        filmDbStorage.deleteFilm(filmId);
+    public Optional<Integer> deleteFilm(int filmId) {
+        return filmDbStorage.deleteFilm(filmId);
     }
 
     public List<Film> searchByTitleByDirector(String query, List<String> by) {

@@ -123,7 +123,7 @@ public class UserService {
         return filmsForRecommendation;
     }
 
-    public void deleteUser(int userId) {
-        userDbStorage.deleteUser(userId);
+    public Optional<Integer> deleteUser(int userId) {
+        return userDbStorage.deleteUser(userId);
     }
 }

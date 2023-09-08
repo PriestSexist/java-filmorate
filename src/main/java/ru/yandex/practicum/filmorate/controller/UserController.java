@@ -120,13 +120,9 @@ public class UserController {
 
     @DeleteMapping("/{userId}")
     public void deleteUser(@PathVariable int userId) {
-        Optional<User> optionalUser = userService.getUserById(userId);
-
-        if (optionalUser.isEmpty()) {
+        userService.deleteUser(userId).orElseThrow(() -> {
             throw new UserNotFoundException("User not found");
-        }
-
-        userService.deleteUser(userId);
+        });
     }
 
     @GetMapping("/{id}/recommendations")

@@ -36,11 +36,10 @@ public class DirectorService {
      * @return режисер
      */
     public Director getDirector(int id) {
-        if (directorStorage.isDirectorPresent(id)) {
-            return directorStorage.getDirector(id);
-        } else {
+        if (!directorStorage.isDirectorPresent(id)) {
             throw new NotFoundException(String.format("Режисер с идентификатором %s не найден", id));
         }
+        return directorStorage.getDirector(id);
     }
 
     /**

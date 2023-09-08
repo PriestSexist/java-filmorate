@@ -33,5 +33,5 @@ public interface FilmStorage {
 
     List<Film> getPopularByGenre(int count, int genreId);
 
-    void deleteFilm(int filmId);
+    Optional<Integer> deleteFilm(int filmId);
 }

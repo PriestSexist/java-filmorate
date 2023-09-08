@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.storage.director.dao;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -37,18 +38,16 @@ public class DirectorDbStorage implements DirectorStorage {
 
     @Override
     public Director getDirector(int id) {
-        log.debug("Получение режисера под идентификатором {} из базы.", id);
 
-        SqlRowSet directorRows = jdbcTemplate
-                .queryForRowSet("select * from directors where director_id = ?", id);
-        if (directorRows.next()) {
-            return Director.builder()
-                    .id(directorRows.getInt("director_id"))
-                    .name(directorRows.getString("name"))
-                    .build();
-        } else {
+        log.debug("Получение режисера под идентификатором {} из базы.", id);
+        String sqlQuery = "select * from directors where director_id = ? ";
+
+        try {
+            return jdbcTemplate.query(sqlQuery, this::buildDirector, id).stream().findFirst().get();
+        } catch (DataIntegrityViolationException exception) {
             throw new NotFoundException(String.format("Режиссера с id=%d не существует", id));
         }
+
     }
 
     private Director buildDirector(ResultSet rs, int rowNum) throws SQLException {
@@ -69,32 +68,32 @@ public class DirectorDbStorage implements DirectorStorage {
             stmt.setString(1, director.getName());
             return stmt;
         }, keyHolder);
-        if (keyHolder.getKey() != null) {
-            int id = keyHolder.getKey().intValue();
-            return getDirector(id);
-        } else {
+        if (keyHolder.getKey() == null) {
             throw new RuntimeException(String.format("Произошла ошибка во время создания режиссера %s", director));
+
         }
+        director.setId(keyHolder.getKey().intValue());
+        return director;
     }
 
     @Override
     public Director updateDirector(Director director) {
         log.debug("Обновление режисера.");
+        String sqlQuery = "update directors set name = ? where director_id = ?";
 
-        if (isDirectorPresent(director.getId())) {
-            String sqlQuery = "update directors set name = ? where director_id = ?";
-            jdbcTemplate.update(sqlQuery, director.getName(), director.getId());
+        if (jdbcTemplate.update(sqlQuery, director.getName(), director.getId()) != 1) {
+            throw new NotFoundException(String.format("Режиссера с id=%d не существует", director.getId()));
         }
-        return getDirector(director.getId());
+        return director;
     }
 
     @Override
     public void removeDirector(Integer id) {
-        log.debug("Удаление режисера.");
+        log.debug("Удаление режиcера.");
+        String sqlQuery = "delete from directors where director_id = ?";
 
-        if (isDirectorPresent(id)) {
-            String sqlQuery = "delete from directors where director_id = ?";
-            jdbcTemplate.update(sqlQuery, id);
+        if (jdbcTemplate.update(sqlQuery, id) != 1) {
+            throw new NotFoundException(String.format("Режиссера с id=%d не существует", id));
         }
     }
 
