@@ -32,6 +32,7 @@ public class ReviewService {
         this.eventService = eventService;
     }
 
+
     public Optional<Review> postReview(Review review) {
         checkUserId(review.getUserId()); //проверяю тут, чтобы не генерировались лишние id при ошибке создания review
         checkFilmId(review.getFilmId());

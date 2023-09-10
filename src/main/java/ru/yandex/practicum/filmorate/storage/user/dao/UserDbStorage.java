@@ -7,16 +7,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.model.FriendShip;
-import ru.yandex.practicum.filmorate.model.Like;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
-@Component("userDbStorage")
+@Component()
 public class UserDbStorage implements UserStorage {
 
     private final JdbcTemplate jdbcTemplate;
@@ -347,6 +345,87 @@ public class UserDbStorage implements UserStorage {
         return myFriends;
     }
 
+    @Override
+    public HashMap<Integer, HashMap<Integer, Film>> getRecommendationFilms(int userId) {
+        // Запрос на получение всех фильмов
+        String sqlQueryForGettingFilms = "SELECT F.FILM_ID, F.NAME, F.RELEASE_DATE, F.DURATION, F.DESCRIPTION, M.MPA_ID, M.NAME AS MNAME, LIKE_ID, L.USER_ID, G.GENRE_ID, G.NAME AS GNAME " +
+                "FROM LIKES AS L " +
+                "LEFT JOIN FILMS AS F on L.FILM_ID = F.FILM_ID " +
+                "LEFT JOIN MPA AS M on F.MPA_ID = M.MPA_ID " +
+                "LEFT JOIN FILM_GENRE_CONNECTION AS FGC on F.FILM_ID = FGC.FILM_ID " +
+                "LEFT JOIN GENRES AS G on FGC.GENRE_ID = G.GENRE_ID ";
+
+        Film film;
+        Genre genre;
+
+        // Мапа айди пользователя, мапа лайкнутых фильмов, где ключ - айди фильма, а значение - фильм
+        HashMap<Integer, HashMap<Integer, Film>> usersAndFilms = new HashMap<>();
+
+        // Выполнение запроса
+        SqlRowSet filmsFromDb = jdbcTemplate.queryForRowSet(sqlQueryForGettingFilms);
+
+        // Прохожусь по всем строкам
+        while (filmsFromDb.next()) {
+
+            // Если ключ содержится в мапе фильмов
+            if (usersAndFilms.containsKey(filmsFromDb.getInt("USER_ID")) && usersAndFilms.get(filmsFromDb.getInt("USER_ID")).containsKey(filmsFromDb.getInt("FILM_ID"))) {
+
+                //Достаю фильм из мапы
+                film = usersAndFilms.get(filmsFromDb.getInt("USER_ID")).get(filmsFromDb.getInt("FILM_ID"));
+
+                // Отдельно создаю объект для Genre и добавляю его в объект фильма
+                genre = createGenre(filmsFromDb);
+
+                // Если жанр нашёлся и создался нормально, то я добавляю его фильму
+                if (genre != null) {
+                    film.getGenres().add(genre);
+                }
+
+                // Если ключа нет в мапе
+            } else {
+
+                // Создаю объект фильма из запроса
+                film = createFilm(filmsFromDb);
+
+                // Отдельно создаю объект для Genre
+                genre = createGenre(filmsFromDb);
+
+                // Если жанр нашёлся и создался нормально, то я добавляю его фильму
+                if (genre != null) {
+                    film.getGenres().add(genre);
+                }
+
+                // Если у мапы usersAndFilms ещё нет мапы с фильмами, то я создаю и заполняю. Если уже есть, то не создаю
+                if (usersAndFilms.get(filmsFromDb.getInt("USER_ID")) == null) {
+                    HashMap<Integer, Film> films = new HashMap<>();
+                    films.put(film.getId(), film);
+                    usersAndFilms.put(filmsFromDb.getInt("USER_ID"), films);
+                    continue;
+                }
+
+                usersAndFilms.get(filmsFromDb.getInt("USER_ID")).put(film.getId(), film);
+
+
+            }
+        }
+        // Возвращаю заполненную мапу айди пользователя, мапа лайкнутых фильмов, где ключ - айди фильма, а значение - фильм
+        return usersAndFilms;
+    }
+
+    private Film createFilm(SqlRowSet sqlRowSet) {
+        return new Film(sqlRowSet.getInt("FILM_ID"),
+                sqlRowSet.getString("NAME"),
+                sqlRowSet.getString("DESCRIPTION"),
+                new java.sql.Date(Objects.requireNonNull(sqlRowSet.getDate("RELEASE_DATE")).getTime()).toLocalDate(),
+                sqlRowSet.getInt("DURATION"),
+                createMpa(sqlRowSet));
+    }
+
+    private Mpa createMpa(SqlRowSet sqlRowSet) {
+        return new Mpa(sqlRowSet.getInt("MPA_ID"),
+                sqlRowSet.getString("MNAME"));
+    }
+
     private FriendShip createFriendRequest(SqlRowSet sqlRowSet) {
         if (sqlRowSet.getInt("FRIEND_REQUEST_ID") != 0) {
             return new FriendShip(sqlRowSet.getInt("USER_ID"),
@@ -364,12 +443,31 @@ public class UserDbStorage implements UserStorage {
         return null;
     }
 
+    private Genre createGenre(SqlRowSet sqlRowSet) {
+        if (sqlRowSet.getInt("GENRE_ID") != 0) {
+            return new Genre(sqlRowSet.getInt("GENRE_ID"),
+                    sqlRowSet.getString("GNAME"));
+        }
+        return null;
+    }
+
     private User createUser(SqlRowSet sqlRowSet) {
         return new User(sqlRowSet.getInt("USER_ID"),
                 sqlRowSet.getString("EMAIL"),
                 sqlRowSet.getString("LOGIN"),
                 sqlRowSet.getString("NAME"),
                 new java.sql.Date(Objects.requireNonNull(sqlRowSet.getDate("BIRTHDAY")).getTime()).toLocalDate());
+    }
+
+    @Override
+    public Optional<Integer> deleteUser(int userId) {
+        final String sqlQuery = "DELETE FROM USERS WHERE USER_ID=?";
+
+        int deletedRows = jdbcTemplate.update(sqlQuery, userId);
+        if (deletedRows != 1) {
+            return Optional.empty();
+        }
+        return Optional.of(userId);
     }
 
 }

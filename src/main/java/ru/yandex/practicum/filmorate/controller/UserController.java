@@ -7,6 +7,7 @@ import ru.yandex.practicum.filmorate.exception.user.EqualIdentifierException;
 import ru.yandex.practicum.filmorate.exception.user.InvalidLoginException;
 import ru.yandex.practicum.filmorate.exception.user.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Event;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.EventService;
 import ru.yandex.practicum.filmorate.service.UserService;
@@ -116,6 +117,19 @@ public class UserController {
 
         return userService.getCommonFriends(id, otherId);
     }
+
+    @DeleteMapping("/{userId}")
+    public void deleteUser(@PathVariable int userId) {
+        userService.deleteUser(userId).orElseThrow(() -> {
+            throw new UserNotFoundException("User not found");
+        });
+    }
+
+    @GetMapping("/{id}/recommendations")
+    public Collection<Film> getRecommendationFilms(@PathVariable int id) {
+        return userService.getRecommendationFilms(id);
+    }
+
 
     @GetMapping("/{id}/feed")
     public List<Event> getFeed(@PathVariable int id) {

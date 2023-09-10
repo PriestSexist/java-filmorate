@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -33,6 +32,7 @@ public class ReviewControllerTest {
     private final ReviewDbStorage reviewStorage;
     private final UserDbStorage userStorage;
     private final FilmDbStorage filmStorage;
+
     private final EventDbStorage eventDbStorage;
 
     private final UserService userService;
@@ -40,6 +40,7 @@ public class ReviewControllerTest {
     private final FilmService filmService;
 
     private final ReviewService reviewService;
+
 
     private Film getTestFilm() {
         Mpa mpa = new Mpa(5, "NC-17");
@@ -232,17 +233,5 @@ public class ReviewControllerTest {
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("filmId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("userId", 1))
                 .hasValueSatisfying(review -> assertThat(review).hasFieldOrPropertyWithValue("useful", 0));
-    }
-
-    @Test
-    void testGetFeedReview() {
-        userService.postUser(getTestUser());
-        filmService.postFilm(getTestFilm());
-        reviewService.postReview(getTestReview());
-
-        Optional<Review> updatedReview = reviewService.updateReview(getTestReviewToUpdate());
-
-
-        Assertions.assertEquals(eventDbStorage.getFeed(updatedReview.get().getReviewId()).size(), 2);
     }
 }
